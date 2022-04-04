@@ -11,21 +11,21 @@ logger = logging.getLogger(__name__)
 ##### USER DEFINED GENERAL SETTINGS #####
 
 #set new name for each experiment, otherwise files will be overwritten
-EXP_NAME = 'data'
-EVOLVER_IP = '192.168.1.2'
+EXP_NAME = 'test'
+EVOLVER_IP = '192.168.1.9'
 EVOLVER_PORT = 8081
 
 ##### Identify pump calibration files, define initial values for temperature, stirring, volume, power settings
 
-TEMP_INITIAL = [30] * 16 #degrees C, makes 16-value list
+TEMP_INITIAL = [30] * 4 #degrees C, makes 16-value list
 #Alternatively enter 16-value list to set different values
 #TEMP_INITIAL = [30,30,30,30,32,32,32,32,34,34,34,34,36,36,36,36]
 
-STIR_INITIAL = [8] * 16 #try 8,10,12 etc; makes 16-value list
+STIR_INITIAL = [0] * 4 #try 8,10,12 etc; makes 16-value list
 #Alternatively enter 16-value list to set different values
 #STIR_INITIAL = [7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10]
 
-VOLUME =  25 #mL, determined by vial cap straw length
+VOLUME =  5 #mL, determined by vial cap straw length
 OPERATION_MODE = 'turbidostat' #use to choose between 'turbidostat' and 'chemostat' functions
 # if using a different mode, name your function as the OPERATION_MODE variable
 
@@ -147,7 +147,7 @@ def turbidostat(eVOLVER, input_data, vials, elapsed_time):
 
     # send fluidic command only if we are actually turning on any of the pumps
     if MESSAGE != ['--'] * 48:
-        eVOLVER.fluid_command(MESSAGE)
+        #eVOLVER.fluid_command(MESSAGE)
 
         # your_FB_function_here() #good spot to call feedback functions for dynamic temperature, stirring, etc for ind. vials
     # your_function_here() #good spot to call non-feedback functions for dynamic temperature, stirring, etc.

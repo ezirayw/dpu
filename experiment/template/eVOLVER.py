@@ -22,7 +22,7 @@ from custom_script import STIR_INITIAL, TEMP_INITIAL
 # Should not be changed
 # vials to be considered/excluded should be handled
 # inside the custom functions
-VIALS = [x for x in range(16)]
+QUADS = [[x for x in range(18)], [x for x in range(18)], [x for x in range(18)], [x for x in range(18)]]
 
 SAVE_PATH = os.path.dirname(os.path.realpath(__file__))
 EXP_DIR = os.path.join(SAVE_PATH, 'data')
@@ -77,7 +77,7 @@ class EvolverNamespace(BaseNamespace):
 
         # apply calibrations
         # update temperatures if needed
-        data = self.transform_data(data, VIALS, od_cal, temp_cal)
+        data = self.transform_data(data, QUADS, od_cal, temp_cal)
         if data is None:
             logger.error('could not tranform raw data, skipping user-'
                          'defined functions')
@@ -140,7 +140,7 @@ class EvolverNamespace(BaseNamespace):
         self.emit('getactivecal',
                   {}, namespace = '/dpu-evolver')
 
-    def transform_data(self, data, vials, od_cal, temp_cal):
+    def transform_data(self, data, quads, od_cal, temp_cal):
         od_data_2 = None
         if od_cal['type'] == THREE_DIMENSION:
             od_data_2 = data['data'].get(od_cal['params'][1], None)
@@ -165,61 +165,62 @@ class EvolverNamespace(BaseNamespace):
         set_temp_data = np.array([float(x) for x in set_temp_data])
 
         temps = []
-        for x in vials:
-            file_name =  "vial{0}_temp_config.txt".format(x)
-            file_path = os.path.join(EXP_DIR, 'temp_config', file_name)
-            temp_set_data = np.genfromtxt(file_path, delimiter=',')
-            temp_set = temp_set_data[len(temp_set_data)-1][1]
-            temps.append(temp_set)
-            od_coefficients = od_cal['coefficients'][x]
-            temp_coefficients = temp_cal['coefficients'][x]
-            try:
-                if od_cal['type'] == SIGMOID:
-                    #convert raw photodiode data into ODdata using calibration curve
-                    od_data[x] = np.real(od_coefficients[2] -
-                                        ((np.log10((od_coefficients[1] -
-                                                    od_coefficients[0]) /
-                                                    (float(od_data[x]) -
-                                                    od_coefficients[0])-1)) /
-                                                    od_coefficients[3]))
-                    if not np.isfinite(od_data[x]):
-                        od_data[x] = 'NaN'
-                        logger.debug('OD from vial %d: %s' % (x, od_data[x]))
+        for quad in quads:
+            for vial in quad:
+                file_name =  "quad_{0}_vial{1}_temp_config.txt".format(quad,vial)
+                file_path = os.path.join(EXP_DIR, 'temp_config', file_name)
+                temp_set_data = np.genfromtxt(file_path, delimiter=',')
+                temp_set = temp_set_data[len(temp_set_data)-1][1]
+                temps.append(temp_set)
+                od_coefficients = od_cal['coefficients'][x]
+                temp_coefficients = temp_cal['coefficients'][x]
+                try:
+                    if od_cal['type'] == SIGMOID:
+                        #convert raw photodiode data into ODdata using calibration curve
+                        od_data[x] = np.real(od_coefficients[2] -
+                                            ((np.log10((od_coefficients[1] -
+                                                        od_coefficients[0]) /
+                                                        (float(od_data[x]) -
+                                                        od_coefficients[0])-1)) /
+                                                        od_coefficients[3]))
+                        if not np.isfinite(od_data[x]):
+                            od_data[x] = 'NaN'
+                            logger.debug('OD from vial %d: %s' % (x, od_data[x]))
+                        else:
+                            logger.debug('OD from vial %d: %.3f' % (x, od_data[x]))
+                    elif od_cal['type'] == THREE_DIMENSION:
+                        od_data[x] = np.real(od_coefficients[0] +
+                                            (od_coefficients[1]*od_data[x]) +
+                                            (od_coefficients[2]*od_data_2[x]) +
+                                            (od_coefficients[3]*(od_data[x]**2)) +
+                                            (od_coefficients[4]*od_data[x]*od_data_2[x]) +
+                                            (od_coefficients[5]*(od_data_2[x]**2)))
                     else:
-                        logger.debug('OD from vial %d: %.3f' % (x, od_data[x]))
-                elif od_cal['type'] == THREE_DIMENSION:
-                    od_data[x] = np.real(od_coefficients[0] +
-                                        (od_coefficients[1]*od_data[x]) +
-                                        (od_coefficients[2]*od_data_2[x]) +
-                                        (od_coefficients[3]*(od_data[x]**2)) +
-                                        (od_coefficients[4]*od_data[x]*od_data_2[x]) +
-                                        (od_coefficients[5]*(od_data_2[x]**2)))
-                else:
-                    logger.error('OD calibration not of supported type!')
+                        logger.error('OD calibration not of supported type!')
+                        od_data[x] = 'NaN'
+                except ValueError:
+                    print("OD Read Error")
+                    logger.error('OD read error for vial %d, setting to NaN' % x)
                     od_data[x] = 'NaN'
-            except ValueError:
-                print("OD Read Error")
-                logger.error('OD read error for vial %d, setting to NaN' % x)
-                od_data[x] = 'NaN'
-            try:
-                temp_data[x] = (float(temp_data[x]) *
-                                temp_coefficients[0]) + temp_coefficients[1]
-                logger.debug('temperature from vial %d: %.3f' % (x, temp_data[x]))
-            except ValueError:
-                print("Temp Read Error")
-                logger.error('temperature read error for vial %d, setting to NaN'
-                            % x)
-                temp_data[x]  = 'NaN'
-            try:
-                set_temp_data[x] = (float(set_temp_data[x]) *
+                try:
+                    temp_data[x] = (float(temp_data[x]) *
                                     temp_coefficients[0]) + temp_coefficients[1]
-                logger.debug('set_temperature from vial %d: %.3f' % (x,
-                                                                set_temp_data[x]))
-            except ValueError:
-                print("Set Temp Read Error")
-                logger.error('set temperature read error for vial %d, setting to NaN'
-                            % x)
-                set_temp_data[x]  = 'NaN'
+                    logger.debug('temperature from vial %d: %.3f' % (x, temp_data[x]))
+                except ValueError:
+                    print("Temp Read Error")
+                    logger.error('temperature read error for vial %d, setting to NaN'
+                                % x)
+                    temp_data[x]  = 'NaN'
+                try:
+                    set_temp_data[x] = (float(set_temp_data[x]) *
+                                        temp_coefficients[0]) + temp_coefficients[1]
+                    logger.debug('set_temperature from vial %d: %.3f' % (x,
+                                                                    set_temp_data[x]))
+                except ValueError:
+                    print("Set Temp Read Error")
+                    logger.error('set temperature read error for vial %d, setting to NaN'
+                                % x)
+                    set_temp_data[x]  = 'NaN'
 
         temps = np.array(temps)
         # update temperatures only if difference with expected
@@ -633,14 +634,14 @@ if __name__ == '__main__':
                                                       )
 
     # Using a non-blocking stream reader to be able to listen
-    # for commands from the electron app. 
+    # for commands from the electron app.
     nbsr = NBSR(sys.stdin)
     paused = False
 
     # logging setup
 
     reset_connection_timer = time.time()
-    while True:        
+    while True:
         try:
             # infinite loop
 
@@ -652,7 +653,7 @@ if __name__ == '__main__':
                 paused = True
                 EVOLVER_NS.stop_exp()
                 socketIO.disconnect()
-                
+
             if 'continue-script' in message:
                 print('Restarting experiment', flush = True)
                 logger.info('Restarting experiment')
