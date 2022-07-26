@@ -22,7 +22,7 @@ from custom_script import STIR_INITIAL, TEMP_INITIAL
 # Should not be changed
 # vials to be considered/excluded should be handled
 # inside the custom functions
-VIALS = [x for x in range(16)]
+QUADS = [[x for x in range(18)], [x for x in range(18)], [x for x in range(18)], [x for x in range(18)]]
 
 SAVE_PATH = os.path.dirname(os.path.realpath(__file__))
 EXP_DIR = os.path.join(SAVE_PATH, EXP_NAME)
@@ -79,7 +79,7 @@ class EvolverNamespace(BaseNamespace):
 
         # apply calibrations
         # update temperatures if needed
-        data = self.transform_data(data, VIALS, od_cal, temp_cal)
+        data = self.transform_data(data, QUADS, od_cal, temp_cal)
         if data is None:
             logger.error('could not tranform raw data, skipping user-'
                          'defined functions')
@@ -91,27 +91,23 @@ class EvolverNamespace(BaseNamespace):
             self.OD_initial = data['transformed']['od']
         elif self.OD_initial is None:
             self.OD_initial = np.zeros(len(VIALS))
-        data['transformed']['od'] = (data['transformed']['od'] -
-                                        self.OD_initial)
+        data['transformed']['od'] = (data['transformed']['od'] - self.OD_initial)
+
         # save data
         try:
-            self.save_data(data['transformed']['od'], elapsed_time,
-                            VIALS, 'OD')
-            self.save_data(data['transformed']['temp'], elapsed_time,
-                            VIALS, 'temp')
+            self.save_data(data['transformed']['od'], elapsed_time, QUADS, 'OD')
+            self.save_data(data['transformed']['temp'], elapsed_time, QUADS, 'temp')
 
             for param in od_cal['params']:
-                self.save_data(data['data'].get(param, []), elapsed_time,
-                            VIALS, param + '_raw')
+                self.save_data(data['data'].get(param, []), elapsed_time, QUADS, param + '_raw')
             for param in temp_cal['params']:
-                self.save_data(data['data'].get(param, []), elapsed_time,
-                            VIALS, param + '_raw')
+                self.save_data(data['data'].get(param, []), elapsed_time, QUADS, param + '_raw')
         except OSError:
             logger.info("Broadcast received before experiment initialization - skipping custom function...")
             return
 
         # run custom functions
-        self.custom_functions(data, VIALS, elapsed_time)
+        self.custom_functions(data, QUADS, elapsed_time)
         # save variables
         self.save_variables(self.start_time, self.OD_initial)
 
@@ -151,12 +147,25 @@ class EvolverNamespace(BaseNamespace):
         self.emit('getactivecal',
                   {}, namespace = '/dpu-evolver')
 
-    def transform_data(self, data, vials, od_cal, temp_cal):
+    def transform_data(self, data, quads, od_cal, temp_cal):
         od_data_2 = None
         if od_cal['type'] == THREE_DIMENSION:
             od_data_2 = data['data'].get(od_cal['params'][1], None)
 
-        od_data = data['data'].get(od_cal['params'][0], None)
+        #OD data formatting from left/right to quad/vial
+        od_data_left = [[],[],[],[]]
+        od_data_right = [[],[],[],[]]
+        vial_index = [[0,1,2,3,4,5,6,7,8],[9,10,11,12,13,14,15,16,17],[18,19,20,21,22,23,24,25,26],[27,28,29,30,31,32,33,34,35]]
+        for quad in vial_index:
+            od_data_left[quad] = [data['data'].get('od_90_left', None)[i] for i in vial_indexes[quad]]
+            od_data_left[quad] = [data['data'].get('od_90_left', None)[i] for i in vial_indexes[quad]]
+
+        od_data = [[],[],[],[]]
+        for quad in od_data:
+            od_data[quad].append(float(od_left[quad][0]), float(od_left[quad][1]), float(od_left[quad][2]), float(od_right[quad][0]), float(od_right[quad][1]), float(od_right[quad][2]));
+            od_data[quad].append(float(od_left[quad][3]), float(od_left[quad][4]), float(od_left[quad][5]), float(od_right[quad][3]), float(od_right[quad][4]), float(od_right[quad][5]));
+            od_data[quad].append(float(od_left[quad][6]), float(od_left[quad][7]), float(od_left[quad][8]), float(od_right[quad][6]), float(od_right[quad][7]), float(od_right[quad][8]));
+
         temp_data = data['data'].get(temp_cal['params'][0], None)
         set_temp_data = data['config'].get('temp', {}).get('value', None)
 
@@ -169,68 +178,69 @@ class EvolverNamespace(BaseNamespace):
             logger.error('NaN received, error with measurements')
             return None
 
-        od_data = np.array([float(x) for x in od_data])
-        if od_data_2:
-            od_data_2 = np.array([float(x) for x in od_data_2])
+        #od_data = np.array([float(x) for x in od_data])
+        #if od_data_2:
+            #od_data_2 = np.array([float(x) for x in od_data_2])
         temp_data = np.array([float(x) for x in temp_data])
         set_temp_data = np.array([float(x) for x in set_temp_data])
 
         temps = []
-        for x in vials:
-            file_name =  "vial{0}_temp_config.txt".format(x)
-            file_path = os.path.join(EXP_DIR, 'temp_config', file_name)
-            temp_set_data = np.genfromtxt(file_path, delimiter=',')
-            temp_set = temp_set_data[len(temp_set_data)-1][1]
-            temps.append(temp_set)
-            od_coefficients = od_cal['coefficients'][x]
-            temp_coefficients = temp_cal['coefficients'][x]
-            try:
-                if od_cal['type'] == SIGMOID:
-                    #convert raw photodiode data into ODdata using calibration curve
-                    od_data[x] = np.real(od_coefficients[2] -
-                                        ((np.log10((od_coefficients[1] -
-                                                    od_coefficients[0]) /
-                                                    (float(od_data[x]) -
-                                                    od_coefficients[0])-1)) /
-                                                    od_coefficients[3]))
-                    if not np.isfinite(od_data[x]):
-                        od_data[x] = 'NaN'
-                        logger.debug('OD from vial %d: %s' % (x, od_data[x]))
+        for quad in quads:
+            for vial in quad:
+                file_name =  "quad_{0}_vial{1}_temp_config.txt".format(quad,vial)
+                file_path = os.path.join(EXP_DIR, 'temp_config', file_name)
+                temp_set_data = np.genfromtxt(file_path, delimiter=',')
+                temp_set = temp_set_data[len(temp_set_data)-1][1]
+                temps.append(temp_set)
+                od_coefficients = od_cal['coefficients'][quad][vial]
+                temp_coefficients = temp_cal['coefficients'][quad]
+                try:
+                    if od_cal['type'] == SIGMOID:
+                        #convert raw photodiode data into ODdata using calibration curve
+                        od_data[quad][vial] = np.real(od_coefficients[2] -
+                                            ((np.log10((od_coefficients[1] -
+                                                        od_coefficients[0]) /
+                                                        (float(od_data[quad][vial]) -
+                                                        od_coefficients[0])-1)) /
+                                                        od_coefficients[3]))
+                        if not np.isfinite(od_data[x]):
+                            od_data[quad][vial] = 'NaN'
+                            logger.debug('OD from quad %d vial %d: %s' % (quad, vial, od_data[quad][vial]))
+                        else:
+                            logger.debug('OD from quad %d vial %d: %.3f' % (quad, vial, od_data[quad][vial]))
+                    elif od_cal['type'] == THREE_DIMENSION:
+                        od_data[x] = np.real(od_coefficients[0] +
+                                            (od_coefficients[1]*od_data[x]) +
+                                            (od_coefficients[2]*od_data_2[x]) +
+                                            (od_coefficients[3]*(od_data[x]**2)) +
+                                            (od_coefficients[4]*od_data[x]*od_data_2[x]) +
+                                            (od_coefficients[5]*(od_data_2[x]**2)))
                     else:
-                        logger.debug('OD from vial %d: %.3f' % (x, od_data[x]))
-                elif od_cal['type'] == THREE_DIMENSION:
-                    od_data[x] = np.real(od_coefficients[0] +
-                                        (od_coefficients[1]*od_data[x]) +
-                                        (od_coefficients[2]*od_data_2[x]) +
-                                        (od_coefficients[3]*(od_data[x]**2)) +
-                                        (od_coefficients[4]*od_data[x]*od_data_2[x]) +
-                                        (od_coefficients[5]*(od_data_2[x]**2)))
-                else:
-                    logger.error('OD calibration not of supported type!')
+                        logger.error('OD calibration not of supported type!')
+                        od_data[x] = 'NaN'
+                except ValueError:
+                    print("OD Read Error")
+                    logger.error('OD read error for vial %d, setting to NaN' % x)
                     od_data[x] = 'NaN'
-            except ValueError:
-                print("OD Read Error")
-                logger.error('OD read error for vial %d, setting to NaN' % x)
-                od_data[x] = 'NaN'
-            try:
-                temp_data[x] = (float(temp_data[x]) *
-                                temp_coefficients[0]) + temp_coefficients[1]
-                logger.debug('temperature from vial %d: %.3f' % (x, temp_data[x]))
-            except ValueError:
-                print("Temp Read Error")
-                logger.error('temperature read error for vial %d, setting to NaN'
-                            % x)
-                temp_data[x]  = 'NaN'
-            try:
-                set_temp_data[x] = (float(set_temp_data[x]) *
+                try:
+                    temp_data[quad] = (float(temp_data[quad]) *
                                     temp_coefficients[0]) + temp_coefficients[1]
-                logger.debug('set_temperature from vial %d: %.3f' % (x,
-                                                                set_temp_data[x]))
-            except ValueError:
-                print("Set Temp Read Error")
-                logger.error('set temperature read error for vial %d, setting to NaN'
-                            % x)
-                set_temp_data[x]  = 'NaN'
+                    logger.debug('temperature from quad %d: %.3f' % (quad, temp_data[quad]))
+                except ValueError:
+                    print("Temp Read Error")
+                    logger.error('temperature read error for quad %d, setting to NaN'
+                                % quad)
+                    temp_data[quad]  = 'NaN'
+                try:
+                    set_temp_data[quad] = (float(set_temp_data[quad]) *
+                                        temp_coefficients[0]) + temp_coefficients[1]
+                    logger.debug('set_temperature from quad %d: %.3f' % (quad,
+                                                                    set_temp_data[quad]))
+                except ValueError:
+                    print("Set Temp Read Error")
+                    logger.error('set temperature read error for quad %d, setting to NaN'
+                                % quad)
+                    set_temp_data[quad]  = 'NaN'
 
         temps = np.array(temps)
         # update temperatures only if difference with expected
@@ -242,7 +252,7 @@ class EvolverNamespace(BaseNamespace):
             coefficients = temp_cal['coefficients']
             raw_temperatures = [str(int((temps[x] - temp_cal['coefficients'][x][1]) /
                                         temp_cal['coefficients'][x][0]))
-                                for x in vials]
+                                for quad in quads]
             self.update_temperature(raw_temperatures)
         else:
             # config from server agrees with local config
@@ -314,19 +324,19 @@ class EvolverNamespace(BaseNamespace):
         logger.info('stopping all pumps')
         self.emit('command', data, namespace = '/dpu-evolver')
 
-    def _create_file(self, vial, param, directory=None, defaults=None):
+    def _create_file(self, vial, quad, param, directory=None, defaults=None):
         if defaults is None:
             defaults = []
         if directory is None:
             directory = param
-        file_name =  "vial{0}_{1}.txt".format(vial, param)
-        file_path = os.path.join(EXP_DIR, directory, file_name)
+        file_name =  "quad{0}_vial{1}_{2}.txt".format(quad, vial, param)
+        file_path = os.path.join(EXP_DIR, "quad_{0}".format(quad), directory, file_name)
         text_file = open(file_path, "w")
         for default in defaults:
             text_file.write(default + '\n')
         text_file.close()
 
-    def initialize_exp(self, vials, experiment_params, log_name, quiet, verbose, ip_address, always_yes = False):
+    def initialize_exp(self, quads, experiment_params, log_name, quiet, verbose, ip_address, always_yes = False):
         self.ip_address = ip_address
         self.experiment_params = experiment_params
         logger.info('initializing experiment')
@@ -367,44 +377,31 @@ class EvolverNamespace(BaseNamespace):
             self.request_calibrations()
 
             logger.debug('creating data directories')
-            os.makedirs(os.path.join(EXP_DIR, 'OD'))
-            os.makedirs(os.path.join(EXP_DIR, 'temp'))
-            os.makedirs(os.path.join(EXP_DIR, 'temp_config'))
-            os.makedirs(os.path.join(EXP_DIR, 'pump_log'))
-            os.makedirs(os.path.join(EXP_DIR, 'ODset'))
-            os.makedirs(os.path.join(EXP_DIR, 'growthrate'))
-            os.makedirs(os.path.join(EXP_DIR, 'chemo_config'))
-            setup_logging(log_name, quiet, verbose)
-            for x in vials:
-                exp_str = "Experiment: {0} vial {1}, {2}".format(EXP_NAME,
-                                                                 x,
-                                                           time.strftime("%c"))
-                # make OD file
-                self._create_file(x, 'OD', defaults=[exp_str])
-                # make temperature data file
-                self._create_file(x, 'temp')
-                # make temperature configuration file
-                self._create_file(x, 'temp_config',
-                                  defaults=[exp_str,
-                                            "0,{0}".format(TEMP_INITIAL[x])])
-                # make pump log file
-                self._create_file(x, 'pump_log',
-                                  defaults=[exp_str,
-                                            "0,0"])
-                # make ODset file
-                self._create_file(x, 'ODset',
-                                  defaults=[exp_str,
-                                            "0,0"])
-                # make growth rate file
-                self._create_file(x, 'gr',
-                                  defaults=[exp_str,
-                                            "0,0"],
-                                  directory='growthrate')
-                # make chemostat file
-                self._create_file(x, 'chemo_config',
-                                  defaults=["0,0,0",
-                                            "0,0,0"],
-                                  directory='chemo_config')
+            for quad in quads:
+                quad_dir = 'quad_{0}'.format(quad)
+                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'OD'))
+                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'temp'))
+                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'temp_config'))
+                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'pump_log'))
+                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'ODset'))
+                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'growthrate'))
+                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'chemo_config'))
+                for vial in quad:
+                    exp_str = "Experiment: {0} quad {1} vial {2}, {3}".format(EXP_NAME, quad, vial, time.strftime("%c"))
+                    # make OD file
+                    self._create_file(vial, quad, 'OD', defaults=[exp_str])
+                    # make temperature data file
+                    self._create_file(vial, quad, 'temp')
+                    # make temperature configuration file
+                    self._create_file(vial, quad, 'temp_config', defaults=[exp_str, "0,{0}".format(TEMP_INITIAL[quad])])
+                    # make pump log file
+                    self._create_file(vial, quad, 'pump_log', defaults=[exp_str, "0,0"])
+                    # make ODset file
+                    self._create_file(vial, quad, 'ODset', defaults=[exp_str, "0,0"])
+                    # make growth rate file
+                    self._create_file(vial, quad, 'gr', defaults=[exp_str, "0,0"], directory='growthrate')
+                    # make chemostat file
+                    self._create_file(vial, quad, 'chemo_config', defaults=["0,0,0", "0,0,0"], directory='chemo_config')
 
             stir_rate = STIR_INITIAL
             temp_values = TEMP_INITIAL
@@ -424,7 +421,7 @@ class EvolverNamespace(BaseNamespace):
                 logger.info('will use initial OD measurement as blank')
             else:
                 self.use_blank = False
-                self.OD_initial = np.zeros(len(vials))
+                self.OD_initial = np.zeros(len(quads), len(quads[0]))
         else:
             # load existing experiment
             pickle_name =  "{0}.pickle".format(EXP_NAME)
@@ -458,12 +455,14 @@ class EvolverNamespace(BaseNamespace):
     def save_data(self, data, elapsed_time, vials, parameter):
         if len(data) == 0:
             return
-        for x in vials:
-            file_name =  "vial{0}_{1}.txt".format(x, parameter)
-            file_path = os.path.join(EXP_DIR, parameter, file_name)
-            text_file = open(file_path, "a+")
-            text_file.write("{0},{1}\n".format(elapsed_time, data[x]))
-            text_file.close()
+        for quad in quads:
+                quad_dir = "quad{0}"
+                for vial in quad:
+                file_name =  "quad{0}_vial{1}_{2}.txt".format(quad, vial, parameter)
+                file_path = os.path.join(EXP_DIR, quad_dir, parameter, file_name)
+                text_file = open(file_path, "a+")
+                text_file.write("{0},{1}\n".format(elapsed_time, data[quad][vial]))
+                text_file.close()
 
     def save_variables(self, start_time, OD_initial):
         # save variables needed for restarting experiment later
@@ -646,7 +645,7 @@ if __name__ == '__main__':
     # start by stopping any existing chemostat
     EVOLVER_NS.stop_all_pumps()
     #
-    EVOLVER_NS.start_time = EVOLVER_NS.initialize_exp(VIALS,
+    EVOLVER_NS.start_time = EVOLVER_NS.initialize_exp(QUADS,
                                                       experiment_params,
                                                       options.log_name,
                                                       options.quiet,
@@ -656,14 +655,14 @@ if __name__ == '__main__':
                                                       )
 
     # Using a non-blocking stream reader to be able to listen
-    # for commands from the electron app. 
+    # for commands from the electron app.
     nbsr = NBSR(sys.stdin)
     paused = False
 
     # logging setup
 
     reset_connection_timer = time.time()
-    while True:        
+    while True:
         try:
             # infinite loop
 
@@ -679,7 +678,7 @@ if __name__ == '__main__':
                 paused = True
                 EVOLVER_NS.stop_exp()
                 socketIO.disconnect()
-                
+
             if 'continue-script' in message:
                 print('Restarting experiment', flush = True)
                 logger.info('Restarting experiment')
