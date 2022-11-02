@@ -94,11 +94,7 @@ def linear_fit(calibration, fit_name, params, graph = True):
     standard_deviations = calibration_data["standard_deviations"]
     measured_data = calibration_data["measured_data"]
 
-<<<<<<< HEAD
-    for i in range(16):
-=======
     for i in range(4):
->>>>>>> 9005fc0073dd09c3a198046872b6d553aec9a345
         paramlin, cov = curve_fit(linear, medians[i], measured_data[i])
         coefficients.append(paramlin.tolist())
 
