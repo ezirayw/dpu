@@ -5,32 +5,43 @@ import logging
 import os.path
 import time
 
+
 # logger setup
 logger = logging.getLogger(__name__)
 
 ##### USER DEFINED GENERAL SETTINGS #####
 
-# If using the GUI for data visualization, do not change EXP_NAME!
-# only change if you wish to have multiple data folders within a single
-# directory for a set of scripts
-EXP_NAME = 'data'
-
-# Port for the eVOLVER connection. You should not need to change this unless you have multiple applications on a single RPi.
+#set new name for each experiment, otherwise files will be overwritten
+EXP_NAME = 'test_expt'
+EVOLVER_IP = '192.168.1.4'
 EVOLVER_PORT = 8081
+
+#settings for ht_evolver
+ARM_IP = '192.168.1.200'
+OCTORPINT_API_KEY = 'F94677C8FF044446BC38874350E02F25'
+BASE_URL = 'http://localhost:5000'
 
 ##### Identify pump calibration files, define initial values for temperature, stirring, volume, power settings
 
-TEMP_INITIAL = [30] * 4 #degrees C, makes 16-value list
+TEMP_INITIAL = [30] * 16 #degrees C, makes 16-value list
+TEMP_INITIAL_HT = [30] * 4 #degrees C, makes 4-value list
 #Alternatively enter 16-value list to set different values
 #TEMP_INITIAL = [30,30,30,30,32,32,32,32,34,34,34,34,36,36,36,36]
+#TEMP_INITIAL_HT = [30,20,30,10]
 
-STIR_INITIAL = [0] * 4 #try 8,10,12 etc; makes 16-value list
+STIR_INITIAL = [8] * 16 #try 8,10,12 etc; makes 16-value list
+STIR_INITIAL_HT = [30] * 4 #try 20-75 etc; makes 4-value list
 #Alternatively enter 16-value list to set different values
 #STIR_INITIAL = [7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10]
+#STIR_INITIAL_HT = [30,50,40,50]
 
-VOLUME =  5 #mL, determined by vial cap straw length
-OPERATION_MODE = 'turbidostat' #use to choose between 'turbidostat' and 'chemostat' functions
+VOLUME =  25 #mL, determined by vial cap straw length
+VOLUME_HT = 25 #mL, determined by efflux needle length
+PUMP_CAL_FILE = 'pump_cal.txt' #tab delimited, mL/s with 16 influx pumps on first row, etc.
+OPERATION_MODE = 'ht_turbidostat' #use to choose between 'turbidostat', 'chemostat', 'ht_turbidostat', or 'ht_chemostat'
 # if using a different mode, name your function as the OPERATION_MODE variable
+
+PLATFORM = 'ht_evolver' #enter either 'evolver' or 'ht_evolver' based on platform being used
 
 ##### END OF USER DEFINED GENERAL SETTINGS #####
 
