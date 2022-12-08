@@ -17,18 +17,23 @@ from nbstreamreader import NonBlockingStreamReader as NBSR
 import custom_script
 from custom_script import EXP_NAME
 from custom_script import EVOLVER_PORT, OPERATION_MODE
-from custom_script import STIR_INITIAL, TEMP_INITIAL
+from custom_script import STIR_INITIAL_HT, TEMP_INITIAL_HT
+
+import fluidic_client
+from fluidic_client import XARM_PORT
 
 # Should not be changed
 # vials to be considered/excluded should be handled
 # inside the custom functions
-QUADS = [[x for x in range(18)], [x for x in range(18)], [x for x in range(18)], [x for x in range(18)]]
+QUADS = {'quad_0': [x for x in range(18)], 'quad_1': [x for x in range(18)], 'quad_2': [x for x in range(18)], 'quad_3': [x for x in range(18)]}
 
 SAVE_PATH = os.path.dirname(os.path.realpath(__file__))
 EXP_DIR = os.path.join(SAVE_PATH, EXP_NAME)
 OD_CAL_PATH = os.path.join(SAVE_PATH, 'od_cal.json')
 TEMP_CAL_PATH = os.path.join(SAVE_PATH, 'temp_cal.json')
 PUMP_CAL_PATH = os.path.join(SAVE_PATH, 'pump_cal.json')
+SYRINGE_PUMP_CAL_PATH = os.path.join(SAVE_PATH, 'syringe_pump_cal.json')
+PUMP_SETTINGS_PATH = os.path.join(SAVE_PATH, 'pump_settings.json')
 JSON_PARAMS_FILE = os.path.join(SAVE_PATH, 'eVOLVER_parameters.json')
 
 SIGMOID = 'sigmoid'
@@ -47,6 +52,7 @@ class EvolverNamespace(BaseNamespace):
     OD_initial = None
     experiment_params = None
     ip_address = None
+    base_url = None
     exp_dir = SAVE_PATH
 
     def on_connect(self, *args):
@@ -63,13 +69,19 @@ class EvolverNamespace(BaseNamespace):
 
     def on_broadcast(self, data):
         logger.info('Broadcast received')
+        if 'dummy' in data:
+            print('skipping, dpu received dummy broadcast')
+            return
         elapsed_time = round((time.time() - self.start_time) / 3600, 4)
         logger.info('Elapsed time: %.4f hours' % elapsed_time)
         print("{0}: {1} Hours".format(EXP_NAME, elapsed_time))
         # are the calibrations in yet?
         if not self.check_for_calibrations():
-            logger.warning('Calibration files still missing, skipping custom '
-                           'functions')
+            logger.warning('Calibration files still missing, skipping custom functions')
+            return
+
+        if not self.check_for_pump_settings():
+            logger.warning('Pump settings still missing, skipping custom functions')
             return
 
         with open(OD_CAL_PATH) as f:
@@ -81,17 +93,19 @@ class EvolverNamespace(BaseNamespace):
         # update temperatures if needed
         data = self.transform_data(data, QUADS, od_cal, temp_cal)
         if data is None:
-            logger.error('could not tranform raw data, skipping user-'
-                         'defined functions')
+            logger.error('could not tranform raw data, skipping user-defined functions')
             return
 
         # should we "blank" the OD?
         if self.use_blank and self.OD_initial is None:
             logger.info('setting initial OD reading')
-            self.OD_initial = data['transformed']['od']
+            self.OD_initial = np.array([[float(x) for x in quad] for quad in data['transformed']['od']])
         elif self.OD_initial is None:
-            self.OD_initial = np.zeros(len(VIALS))
-        data['transformed']['od'] = (data['transformed']['od'] - self.OD_initial)
+            self.OD_initial = np.zeros(len(QUADS), len(QUADS['quad_0']))
+
+        data['transformed']['od'] = np.array([[float(x) for x in quad] for quad in data['transformed']['od']])
+        data['transformed']['od'] = np.subtract(data['transformed']['od'], self.OD_initial)
+        #data['transformed']['od'] = (data['transformed']['od'] - self.OD_initial)
 
         # save data
         try:
@@ -107,7 +121,8 @@ class EvolverNamespace(BaseNamespace):
             return
 
         # run custom functions
-        self.custom_functions(data, QUADS, elapsed_time)
+        test = True
+        self.custom_functions(data, QUADS, elapsed_time, test)
         # save variables
         self.save_variables(self.start_time, self.OD_initial)
 
@@ -125,6 +140,8 @@ class EvolverNamespace(BaseNamespace):
                 file_path = TEMP_CAL_PATH
             elif calibration['calibrationType'] == 'pump':
                 file_path = PUMP_CAL_PATH
+            elif calibration['calibrationType'] == 'syringe_pump':
+                file_path = SYRINGE_PUMP_CAL_PATH
             else:
                 continue
             for fit in calibration['fits']:
@@ -133,19 +150,24 @@ class EvolverNamespace(BaseNamespace):
                         json.dump(fit, f)
                     # Create raw data directories and files for params needed
                     for param in fit['params']:
-                        if not os.path.isdir(os.path.join(EXP_DIR, param + '_raw')) and param != 'pump':
-                            os.makedirs(os.path.join(EXP_DIR, param + '_raw'))
-                            for x in range(len(fit['coefficients'])):
-                                exp_str = "Experiment: {0} vial {1}, {2}".format(EXP_NAME,
-                                        x,
-                                        time.strftime("%c"))
-                                self._create_file(x, param + '_raw', defaults=[exp_str])
-                    break
+                        for quad in QUADS:
+                            current_quad = int(quad.split("_")[1])
+                            if not os.path.isdir(os.path.join(EXP_DIR, quad, param + '_raw')) and (param != 'pump' or param!='syringe_pump'):
+                                os.makedirs(os.path.join(EXP_DIR, quad, param + '_raw'))
+                            for vial in QUADS[quad]:
+                                exp_str = "Experiment: {0} quad-{1}_vial-{2}, {3}".format(EXP_NAME, current_quad, vial, time.strftime("%c"))
+                                self._create_file(vial, quad, param + '_raw', defaults=[exp_str])
+                        break
 
     def request_calibrations(self):
         logger.debug('requesting active calibrations')
         self.emit('getactivecal',
                   {}, namespace = '/dpu-evolver')
+
+    def request_pump_settings(self):
+        pump_settings = fluidic_client.get_pump_settings(self.base_url)
+        with open(PUMP_SETTINGS_PATH, "w") as f:
+            json.dump(pump_settings, f)
 
     def transform_data(self, data, quads, od_cal, temp_cal):
         od_data_2 = None
@@ -155,16 +177,16 @@ class EvolverNamespace(BaseNamespace):
         #OD data formatting from left/right to quad/vial
         od_data_left = [[],[],[],[]]
         od_data_right = [[],[],[],[]]
-        vial_index = [[0,1,2,3,4,5,6,7,8],[9,10,11,12,13,14,15,16,17],[18,19,20,21,22,23,24,25,26],[27,28,29,30,31,32,33,34,35]]
-        for quad in vial_index:
-            od_data_left[quad] = [data['data'].get('od_90_left', None)[i] for i in vial_indexes[quad]]
-            od_data_left[quad] = [data['data'].get('od_90_left', None)[i] for i in vial_indexes[quad]]
+        vial_indexes = [[0,1,2,3,4,5,6,7,8],[9,10,11,12,13,14,15,16,17],[18,19,20,21,22,23,24,25,26],[27,28,29,30,31,32,33,34,35]]
+        for group in range(len(vial_indexes)):
+            od_data_left[group] = [data['data'].get('od_90_left', None)[i] for i in vial_indexes[group]]
+            od_data_right[group] = [data['data'].get('od_90_right', None)[i] for i in vial_indexes[group]]
 
         od_data = [[],[],[],[]]
-        for quad in od_data:
-            od_data[quad].append(float(od_left[quad][0]), float(od_left[quad][1]), float(od_left[quad][2]), float(od_right[quad][0]), float(od_right[quad][1]), float(od_right[quad][2]));
-            od_data[quad].append(float(od_left[quad][3]), float(od_left[quad][4]), float(od_left[quad][5]), float(od_right[quad][3]), float(od_right[quad][4]), float(od_right[quad][5]));
-            od_data[quad].append(float(od_left[quad][6]), float(od_left[quad][7]), float(od_left[quad][8]), float(od_right[quad][6]), float(od_right[quad][7]), float(od_right[quad][8]));
+        for quad in range(len(od_data)):
+            od_data[quad].extend([float(od_data_left[quad][0]), float(od_data_left[quad][1]), float(od_data_left[quad][2]), float(od_data_right[quad][0]), float(od_data_right[quad][1]), float(od_data_right[quad][2])]);
+            od_data[quad].extend([float(od_data_left[quad][3]), float(od_data_left[quad][4]), float(od_data_left[quad][5]), float(od_data_right[quad][3]), float(od_data_right[quad][4]), float(od_data_right[quad][5])]);
+            od_data[quad].extend([float(od_data_left[quad][6]), float(od_data_left[quad][7]), float(od_data_left[quad][8]), float(od_data_right[quad][6]), float(od_data_right[quad][7]), float(od_data_right[quad][8])]);
 
         temp_data = data['data'].get(temp_cal['params'][0], None)
         set_temp_data = data['config'].get('temp', {}).get('value', None)
@@ -181,19 +203,23 @@ class EvolverNamespace(BaseNamespace):
         #od_data = np.array([float(x) for x in od_data])
         #if od_data_2:
             #od_data_2 = np.array([float(x) for x in od_data_2])
-        temp_data = np.array([float(x) for x in temp_data])
-        set_temp_data = np.array([float(x) for x in set_temp_data])
-
-        temps = []
-        for quad in quads:
-            for vial in quad:
-                file_name =  "quad_{0}_vial{1}_temp_config.txt".format(quad,vial)
-                file_path = os.path.join(EXP_DIR, 'temp_config', file_name)
+        for x in range(len(temp_data)):
+            quad_key = 'quad_{0}'.format(x)
+            temp_data[x] = [float(temp_data[x])] * len(quads[quad_key])
+            set_temp_data[x] = [float(set_temp_data[x])] * len(quads[quad_key])
+        temp_data = np.array(temp_data)
+        set_temp_data = np.array(set_temp_data)
+        temps = [[], [], [], []]
+        for quad in range(len(quads)):
+            temp_coefficients = temp_cal['coefficients'][quad]
+            quad_key = 'quad_{0}'.format(quad)
+            for vial in quads[quad_key]:
+                file_name =  "quad-{0}_vial-{1}_temp_config.txt".format(quad,vial)
+                file_path = os.path.join(EXP_DIR, quad_key, 'temp_config', file_name)
                 temp_set_data = np.genfromtxt(file_path, delimiter=',')
                 temp_set = temp_set_data[len(temp_set_data)-1][1]
-                temps.append(temp_set)
+                temps[quad].append(temp_set)
                 od_coefficients = od_cal['coefficients'][quad][vial]
-                temp_coefficients = temp_cal['coefficients'][quad]
                 try:
                     if od_cal['type'] == SIGMOID:
                         #convert raw photodiode data into ODdata using calibration curve
@@ -203,13 +229,13 @@ class EvolverNamespace(BaseNamespace):
                                                         (float(od_data[quad][vial]) -
                                                         od_coefficients[0])-1)) /
                                                         od_coefficients[3]))
-                        if not np.isfinite(od_data[x]):
+                        if not np.isfinite(od_data[quad][vial]):
                             od_data[quad][vial] = 'NaN'
                             logger.debug('OD from quad %d vial %d: %s' % (quad, vial, od_data[quad][vial]))
                         else:
                             logger.debug('OD from quad %d vial %d: %.3f' % (quad, vial, od_data[quad][vial]))
                     elif od_cal['type'] == THREE_DIMENSION:
-                        od_data[x] = np.real(od_coefficients[0] +
+                        od_data[quad][vial] = np.real(od_coefficients[0] +
                                             (od_coefficients[1]*od_data[x]) +
                                             (od_coefficients[2]*od_data_2[x]) +
                                             (od_coefficients[3]*(od_data[x]**2)) +
@@ -217,50 +243,43 @@ class EvolverNamespace(BaseNamespace):
                                             (od_coefficients[5]*(od_data_2[x]**2)))
                     else:
                         logger.error('OD calibration not of supported type!')
-                        od_data[x] = 'NaN'
+                        od_data[quad][vial] = 'NaN'
                 except ValueError:
                     print("OD Read Error")
                     logger.error('OD read error for vial %d, setting to NaN' % x)
-                    od_data[x] = 'NaN'
+                    od_data[quad][vial] = 'NaN'
                 try:
-                    temp_data[quad] = (float(temp_data[quad]) *
-                                    temp_coefficients[0]) + temp_coefficients[1]
-                    logger.debug('temperature from quad %d: %.3f' % (quad, temp_data[quad]))
+                    temp_data[quad][vial] = (float(temp_data[quad][vial]) * temp_coefficients[0]) + temp_coefficients[1]
+                    logger.debug('temperature from quad_%d vial_%d: %.3f' % (quad, vial, temp_data[quad][vial]))
                 except ValueError:
                     print("Temp Read Error")
-                    logger.error('temperature read error for quad %d, setting to NaN'
-                                % quad)
-                    temp_data[quad]  = 'NaN'
+                    logger.error('temperature read error for quad_%d vial_%d, setting to NaN' % (quad, vial))
+                    temp_data[quad][vial]  = 'NaN'
                 try:
-                    set_temp_data[quad] = (float(set_temp_data[quad]) *
-                                        temp_coefficients[0]) + temp_coefficients[1]
-                    logger.debug('set_temperature from quad %d: %.3f' % (quad,
-                                                                    set_temp_data[quad]))
+                    set_temp_data[quad][vial] = (float(set_temp_data[quad][vial]) * temp_coefficients[0]) + temp_coefficients[1]
+                    logger.debug('set_temperature from quad_%d vial_%d: %.3f' % (quad, vial, set_temp_data[quad][vial]))
                 except ValueError:
                     print("Set Temp Read Error")
-                    logger.error('set temperature read error for quad %d, setting to NaN'
-                                % quad)
-                    set_temp_data[quad]  = 'NaN'
+                    logger.error('set temperature read error for quad_%d vial_%d, setting to NaN' % (quad, vial))
+                    set_temp_data[quad][vial]  = 'NaN'
 
         temps = np.array(temps)
         # update temperatures only if difference with expected
         # value is above 0.2 degrees celsius
         delta_t = np.abs(set_temp_data - temps).max()
         if delta_t > 0.2:
-            logger.info('updating temperatures (max. deltaT is %.2f)' %
-                        delta_t)
+            logger.info('updating temperatures (max. deltaT is %.2f)' % delta_t)
             coefficients = temp_cal['coefficients']
-            raw_temperatures = [str(int((temps[x] - temp_cal['coefficients'][x][1]) /
-                                        temp_cal['coefficients'][x][0]))
-                                for quad in quads]
+            raw_temperatures = [None] * len(quads)
+            for quad in range(len(quads)):
+                raw_temperatures[quad] = str(int((temps[quad][0] - temp_cal['coefficients'][x][1]) / temp_cal['coefficients'][x][0]))
             self.update_temperature(raw_temperatures)
         else:
             # config from server agrees with local config
             # report if actual temperature doesn't match
             delta_t = np.abs(temps - temp_data).max()
             if delta_t > 0.2:
-                logger.debug('actual temperature doesn\'t match configuration '
-                            '(yet? max deltaT is %.2f)' % delta_t)
+                logger.debug('actual temperature doesn\'t match configuration (yet? max deltaT is %.2f)' % delta_t)
                 logger.debug('temperature config: %s' % temps)
                 logger.debug('actual temperatures: %s' % temp_data)
 
@@ -287,6 +306,28 @@ class EvolverNamespace(BaseNamespace):
         command = {'param': 'pump', 'value': MESSAGE,
                    'recurring': False ,'immediate': True}
         self.emit('command', command, namespace='/dpu-evolver')
+
+    def ipp_command(self, addr, vial, rate):
+        #self.stop_all_pumps(regular = False, ipp = False)
+        time.sleep(2)
+        message = ['--'] * 48
+        message[addr] = "{0}|{1}|{2}".format(rate, 1, 1)
+        message[addr+1] = "{0}|{1}|{2}".format(rate, 1, 2)
+        message[addr+2] = "{0}|{1}|{2}".format(rate, 1, 3)
+        self.fluid_command(message)
+        time.sleep(2)
+        message = ['--'] * 48
+        if vial == 'all':
+            for addr in IPP_SELECT_ADDRS:
+                message[addr] = 60
+        else:
+            message[IPP_SELECT_ADDRS[int(vial)]] = 40
+        self.fluid_command(message)
+
+    def arm_fluid_command(self, MESSAGE, active_quads):
+        logger.debug('arm fluid command')
+        command = {'pump_commands': MESSAGE, 'recurring': False, 'active_quads':active_quads}
+        #fluidic_client.influx(base_url, command, active_quads)
 
     def update_chemo(self, data, vials, bolus_in_s, period_config, immediate = False):
         current_pump = data['config']['pump']['value']
@@ -329,8 +370,9 @@ class EvolverNamespace(BaseNamespace):
             defaults = []
         if directory is None:
             directory = param
-        file_name =  "quad{0}_vial{1}_{2}.txt".format(quad, vial, param)
-        file_path = os.path.join(EXP_DIR, "quad_{0}".format(quad), directory, file_name)
+        current_quad = int(quad.split("_")[1])
+        file_name =  "quad-{0}_vial-{1}_{2}.txt".format(current_quad, vial, param)
+        file_path = os.path.join(EXP_DIR, quad, directory, file_name)
         text_file = open(file_path, "w")
         for default in defaults:
             text_file.write(default + '\n')
@@ -339,6 +381,7 @@ class EvolverNamespace(BaseNamespace):
     def initialize_exp(self, quads, experiment_params, log_name, quiet, verbose, ip_address, always_yes = False):
         self.ip_address = ip_address
         self.experiment_params = experiment_params
+        self.base_url = "http://" + self.ip_address + ":" + str(XARM_PORT)
         logger.info('initializing experiment')
 
         if os.path.exists(EXP_DIR):
@@ -375,27 +418,31 @@ class EvolverNamespace(BaseNamespace):
             start_time = time.time()
 
             self.request_calibrations()
+            self.request_pump_settings()
 
             logger.debug('creating data directories')
             for quad in quads:
-                quad_dir = 'quad_{0}'.format(quad)
-                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'OD'))
-                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'temp'))
-                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'temp_config'))
-                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'pump_log'))
-                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'ODset'))
-                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'growthrate'))
-                os.makedirs(os.path.join(EXP_DIR, quad_dir, 'chemo_config'))
-                for vial in quad:
-                    exp_str = "Experiment: {0} quad {1} vial {2}, {3}".format(EXP_NAME, quad, vial, time.strftime("%c"))
+                current_quad = int(quad.split("_")[1])
+                os.makedirs(os.path.join(EXP_DIR, quad, 'OD'))
+                os.makedirs(os.path.join(EXP_DIR, quad, 'temp'))
+                os.makedirs(os.path.join(EXP_DIR, quad, 'temp_config'))
+                os.makedirs(os.path.join(EXP_DIR, quad, 'pump_log'))
+                os.makedirs(os.path.join(EXP_DIR, quad, 'syringe-pump_log'))
+                os.makedirs(os.path.join(EXP_DIR, quad, 'ODset'))
+                os.makedirs(os.path.join(EXP_DIR, quad, 'growthrate'))
+                os.makedirs(os.path.join(EXP_DIR, quad, 'chemo_config'))
+                for vial in quads[quad]:
+                    exp_str = "Experiment: {0} quad-{1}_vial-{2}, {3}".format(EXP_NAME, quad, vial, time.strftime("%c"))
                     # make OD file
                     self._create_file(vial, quad, 'OD', defaults=[exp_str])
                     # make temperature data file
                     self._create_file(vial, quad, 'temp')
                     # make temperature configuration file
-                    self._create_file(vial, quad, 'temp_config', defaults=[exp_str, "0,{0}".format(TEMP_INITIAL[quad])])
+                    self._create_file(vial, quad, 'temp_config', defaults=[exp_str, "0,{0}".format(TEMP_INITIAL_HT[current_quad])])
                     # make pump log file
                     self._create_file(vial, quad, 'pump_log', defaults=[exp_str, "0,0"])
+                    # make syringe pump log file
+                    self._create_file(vial, quad, 'syringe-pump_log', defaults=[exp_str, "0,0"])
                     # make ODset file
                     self._create_file(vial, quad, 'ODset', defaults=[exp_str, "0,0"])
                     # make growth rate file
@@ -403,8 +450,8 @@ class EvolverNamespace(BaseNamespace):
                     # make chemostat file
                     self._create_file(vial, quad, 'chemo_config', defaults=["0,0,0", "0,0,0"], directory='chemo_config')
 
-            stir_rate = STIR_INITIAL
-            temp_values = TEMP_INITIAL
+            stir_rate = STIR_INITIAL_HT
+            temp_values = TEMP_INITIAL_HT
             if self.experiment_params:
                 stir_rate = list(map(lambda x: x['stir'], self.experiment_params['vial_configuration']))
                 temp_values = list(map(lambda x: x['temp'], self.experiment_params['vial_configuration']))
@@ -421,7 +468,7 @@ class EvolverNamespace(BaseNamespace):
                 logger.info('will use initial OD measurement as blank')
             else:
                 self.use_blank = False
-                self.OD_initial = np.zeros(len(quads), len(quads[0]))
+                self.OD_initial = np.zeros((len(quads), 18))
         else:
             # load existing experiment
             pickle_name =  "{0}.pickle".format(EXP_NAME)
@@ -445,23 +492,33 @@ class EvolverNamespace(BaseNamespace):
 
     def check_for_calibrations(self):
         result = True
-        if not os.path.exists(OD_CAL_PATH) or not os.path.exists(TEMP_CAL_PATH) or not os.path.exists(PUMP_CAL_PATH):
+        if not os.path.exists(OD_CAL_PATH) or not os.path.exists(TEMP_CAL_PATH) or not os.path.exists(PUMP_CAL_PATH) or not os.path.exists(SYRINGE_PUMP_CAL_PATH):
             # log and request again
             logger.warning('Calibrations not received yet, requesting again')
             self.request_calibrations()
             result = False
         return result
 
-    def save_data(self, data, elapsed_time, vials, parameter):
+    def check_for_pump_settings(self):
+        result = True
+        if not os.path.exists(PUMP_SETTINGS_PATH):
+            # log and request again
+            logger.warning('Pump settings not received yet, requesting again')
+            self.request_pump_settings()
+            result = False
+        return result
+
+
+    def save_data(self, data, elapsed_time, quads, parameter):
         if len(data) == 0:
             return
         for quad in quads:
-                quad_dir = "quad{0}"
-                for vial in quad:
-                file_name =  "quad{0}_vial{1}_{2}.txt".format(quad, vial, parameter)
-                file_path = os.path.join(EXP_DIR, quad_dir, parameter, file_name)
+            current_quad = int(quad.split("_")[1])
+            for vial in quads[quad]:
+                file_name =  "quad-{0}_vial-{1}_{2}.txt".format(current_quad, vial, parameter)
+                file_path = os.path.join(EXP_DIR, quad, parameter, file_name)
                 text_file = open(file_path, "a+")
-                text_file.write("{0},{1}\n".format(elapsed_time, data[quad][vial]))
+                text_file.write("{0},{1}\n".format(elapsed_time, data[current_quad][vial]))
                 text_file.close()
 
     def save_variables(self, start_time, OD_initial):
@@ -473,11 +530,17 @@ class EvolverNamespace(BaseNamespace):
         with open(pickle_path, 'wb') as f:
             pickle.dump([start_time, OD_initial], f)
 
-    def get_flow_rate(self):
-        pump_cal = None
-        with open(PUMP_CAL_PATH) as f:
-            pump_cal = json.load(f)
-        return pump_cal['coefficients']
+    def get_step_rate(self):
+        syringe_pump_cal = None
+        with open(SYRINGE_PUMP_CAL_PATH) as f:
+            syringe_pump_cal = json.load(f)
+        return syringe_pump_cal['coefficients']
+
+    def get_pump_settings(self):
+        pump_settings = None
+        with open(PUMP_SETTINGS_PATH) as f:
+            pump_settings = json.load(f)
+        return pump_settings
 
     def calc_growth_rate(self, vial, gr_start, elapsed_time):
         ODfile_name =  "vial{0}_OD.txt".format(vial)
@@ -556,7 +619,7 @@ class EvolverNamespace(BaseNamespace):
             # It is reading the header
             return np.asarray([])
 
-    def custom_functions(self, data, vials, elapsed_time):
+    def custom_functions(self, data, vials, elapsed_time, test):
         # load user script from custom_script.py
         mode = self.experiment_params['function'] if self.experiment_params else OPERATION_MODE
         if mode == 'turbidostat':
@@ -571,7 +634,7 @@ class EvolverNamespace(BaseNamespace):
             logger.info('user-defined operation mode %s' % mode)
             try:
                 func = getattr(custom_script, mode)
-                func(self, data, vials, elapsed_time)
+                func(self, data, vials, elapsed_time, test)
             except AttributeError:
                 logger.error('could not find function %s in custom_script.py' %
                             mode)

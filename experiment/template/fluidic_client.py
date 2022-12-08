@@ -1,28 +1,20 @@
 import requests, time, sys, os, json, yaml, asyncio
 
-# Load config and calibration files
-client_path = os.path.dirname(os.path.realpath(__file__))
-print(client_path)
-config_path = os.path.join(client_path, 'config', 'client_conf.yml')
-calibration_path = os.path.join(client_path, 'config', 'calibrations.json')
+# Port for the robotic fluidics server connection. Do not change
+XARM_PORT = 8080
 
-f1 = open(calibration_path)
-calibration = json.load(f1)
-f1.close()
-
-with open(config_path, 'r') as file:
-    config = yaml.safe_load(file)
-
-IP = config["rpi_ip"]
-PORT = config["server_port"]
-URL = "http://" + IP + ":" + str(PORT)
-print(URL)
+# Headers for api requests to robotic fluidics server
+HEADERS = {'Authorization': 'Basic azI6cENoM0hoTGhIeU1xdzJaRVk2VXJYcW9NOWVVKg==',
+             'Content-Type': 'application/json',
+             'Postman-Token': 'b1dd33bd-212f-4042-9877-e959e3f90a59',
+             'cache-control': 'no-cache'}
 
 def flask_request(url,payload):
     try:
-        headers = config["headers"]
-        response = requests.request("POST", url, json=payload, headers=headers)
+        response = requests.request("POST", url, json=payload, headers=HEADERS)
         print(response.text)
+        result = response.json()
+        return result
     except requests.exceptions.HTTPError as errh:
         print ("Http Error:",errh)
         sys.exit()
@@ -37,39 +29,45 @@ def flask_request(url,payload):
         print(response.text)
         sys.exit()
 
-def arm_test():
-    url = URL + "/arm_test"
+def get_pump_settings(base_url):
+    url = base_url + "/get_pump_settings"
+    payload = {}
+    pump_settings = flask_request(url, payload)
+    return pump_settings
+
+def arm_test(base_url):
+    url = base_url + "/arm_test"
     payload = {}
     flask_request(url, payload)
 
-def move_to_quad(quad):
-    url = URL + "/move_to_quad"
+def move_to_quad(base_url, quad):
+    url = base_url + "/move_to_quad"
     payload = {"quad": quad}
     flask_request(url, payload)
 
-def set_arm():
-    url = URL + "/set_arm"
+def set_arm(base_url):
+    url = base_url + "/set_arm"
     payload = {}
     flask_request(url, payload)
 
-def reset_arm():
-    url = URL + "/reset_arm"
+def reset_arm(base_url):
+    url = base_url + "/reset_arm"
     payload = {}
     flask_request(url, payload)
 
-def fill_tubing():
-    url = URL + "/fill_tubing"
+def fill_tubing(base_url):
+    url = base_url + "/fill_tubing"
     payload = {}
     flask_request(url, payload)
 
-def prime_pumps():
-    url = URL + "/prime_pump"
+def prime_pumps(base_url):
+    url = base_url + "/prime_pump"
     payload = {}
     flask_request(url, payload)
 
-def influx(fluid_command, quads, test):
-    url = URL + "/influx"
-    payload = {"fluid_command": fluid_command, "quads": quads, "test": test}
+def influx(base_url, pump_commands):
+    url = base_url + "/influx"
+    payload = pump_commands
     flask_request(url, payload)
 
 if __name__ == '__main__':
@@ -104,15 +102,3 @@ if __name__ == '__main__':
 
 
     ###### Call functions to make requests to robotic pipette server ########
-    volumes = [[], [], [], []]
-    for x in range(4):
-        volumes[x] = [0] * 18
-
-    test_command = {'base_media': volumes, 'selection_media': volumes, 'antibiotic': volumes}
-    quads = [1]
-    test = False
-
-    set_arm()
-    #move_to_quad(0)
-    influx(test_command, quads, test)
-    reset_arm()
