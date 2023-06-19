@@ -12,20 +12,22 @@ import json
 import traceback
 from scipy import stats
 from socketIO_client import SocketIO, BaseNamespace
+import socketio
 from nbstreamreader import NonBlockingStreamReader as NBSR
 
 import custom_script
 from custom_script import EXP_NAME
-from custom_script import EVOLVER_PORT, OPERATION_MODE
-from custom_script import STIR_INITIAL_HT, TEMP_INITIAL_HT
+from custom_script import EVOLVER_PORT, ROBOTICS_PORT, OPERATION_MODE
+from custom_script import STIR_INITIAL_HT, TEMP_INITIAL_HT, IPP_ADDRESSES
 
-import fluidic_client
-from fluidic_client import XARM_PORT
+from robotic_functions import RoboticsNamespace
+from robotic_functions import PUMP_SETTINGS_PATH
 
 # Should not be changed
 # vials to be considered/excluded should be handled
 # inside the custom functions
 QUADS = {'quad_0': [x for x in range(18)], 'quad_1': [x for x in range(18)], 'quad_2': [x for x in range(18)], 'quad_3': [x for x in range(18)]}
+#QUADS = {'quad_0': [x for x in range(18)]}
 
 SAVE_PATH = os.path.dirname(os.path.realpath(__file__))
 EXP_DIR = os.path.join(SAVE_PATH, EXP_NAME)
@@ -33,7 +35,7 @@ OD_CAL_PATH = os.path.join(SAVE_PATH, 'od_cal.json')
 TEMP_CAL_PATH = os.path.join(SAVE_PATH, 'temp_cal.json')
 PUMP_CAL_PATH = os.path.join(SAVE_PATH, 'pump_cal.json')
 SYRINGE_PUMP_CAL_PATH = os.path.join(SAVE_PATH, 'syringe_pump_cal.json')
-PUMP_SETTINGS_PATH = os.path.join(SAVE_PATH, 'pump_settings.json')
+IPP_CAL_PATH = os.path.join(SAVE_PATH, 'ipp_cal.json')
 JSON_PARAMS_FILE = os.path.join(SAVE_PATH, 'eVOLVER_parameters.json')
 
 SIGMOID = 'sigmoid'
@@ -45,36 +47,34 @@ logger = logging.getLogger('eVOLVER')
 paused = False
 
 EVOLVER_NS = None
+ROBOTICS_NS = None
 
-class EvolverNamespace(BaseNamespace):
+class EvolverNamespace(socketio.ClientNamespace):
+
     start_time = None
     use_blank = False
     OD_initial = None
     experiment_params = None
     ip_address = None
-    base_url = None
     exp_dir = SAVE_PATH
+    robotics_ns = None
 
     def on_connect(self, *args):
-        print("Connected to eVOLVER as client")
-        logger.info('connected to eVOLVER as client')
+        logger.info('dpu connected to base_eVOLVER server')
 
     def on_disconnect(self, *args):
-        print("Disconected from eVOLVER as client")
-        logger.info('disconnected to eVOLVER as client')
+        logger.info('dpu disconnected from base_eVOLVER server')
 
     def on_reconnect(self, *args):
-        print("Reconnected to eVOLVER as client")
-        logger.info("reconnected to eVOLVER as client")
+        logger.info("dpu reconnected to base_eVOLVER as server")
 
     def on_broadcast(self, data):
-        logger.info('Broadcast received')
         if 'dummy' in data:
-            print('skipping, dpu received dummy broadcast')
+            logger.debug('dpu received dummy broadcast')
             return
+        logger.info('Data broadcast received')
         elapsed_time = round((time.time() - self.start_time) / 3600, 4)
         logger.info('Elapsed time: %.4f hours' % elapsed_time)
-        print("{0}: {1} Hours".format(EXP_NAME, elapsed_time))
         # are the calibrations in yet?
         if not self.check_for_calibrations():
             logger.warning('Calibration files still missing, skipping custom functions')
@@ -121,7 +121,7 @@ class EvolverNamespace(BaseNamespace):
             return
 
         # run custom functions
-        test = True
+        test = False
         self.custom_functions(data, QUADS, elapsed_time, test)
         # save variables
         self.save_variables(self.start_time, self.OD_initial)
@@ -131,17 +131,18 @@ class EvolverNamespace(BaseNamespace):
         logging.getLogger('eVOLVER')
 
     def on_activecalibrations(self, data):
-        print('Calibrations recieved')
-        logger.info('Calibrations recieved')
+        logger.info('calibrations recieved')
         for calibration in data:
             if calibration['calibrationType'] == 'od':
                 file_path = OD_CAL_PATH
             elif calibration['calibrationType'] == 'temperature':
                 file_path = TEMP_CAL_PATH
-            elif calibration['calibrationType'] == 'pump':
-                file_path = PUMP_CAL_PATH
+            #elif calibration['calibrationType'] == 'pump':
+             #   file_path = PUMP_CAL_PATH
             elif calibration['calibrationType'] == 'syringe_pump':
                 file_path = SYRINGE_PUMP_CAL_PATH
+            elif calibration['calibrationType'] == 'ipp':
+                file_path = IPP_CAL_PATH
             else:
                 continue
             for fit in calibration['fits']:
@@ -152,22 +153,16 @@ class EvolverNamespace(BaseNamespace):
                     for param in fit['params']:
                         for quad in QUADS:
                             current_quad = int(quad.split("_")[1])
-                            if not os.path.isdir(os.path.join(EXP_DIR, quad, param + '_raw')) and (param != 'pump' or param!='syringe_pump'):
+                            if not os.path.isdir(os.path.join(EXP_DIR, quad, param + '_raw')) and (param != 'pump' or param !='syringe_pump' or param != 'ipp'):
                                 os.makedirs(os.path.join(EXP_DIR, quad, param + '_raw'))
                             for vial in QUADS[quad]:
-                                exp_str = "Experiment: {0} quad-{1}_vial-{2}, {3}".format(EXP_NAME, current_quad, vial, time.strftime("%c"))
+                                exp_str = "Experiment: {0} quad_{1}-vial_{2}, {3}".format(EXP_NAME, current_quad, vial, time.strftime("%c"))
                                 self._create_file(vial, quad, param + '_raw', defaults=[exp_str])
                         break
 
     def request_calibrations(self):
         logger.debug('requesting active calibrations')
-        self.emit('getactivecal',
-                  {}, namespace = '/dpu-evolver')
-
-    def request_pump_settings(self):
-        pump_settings = fluidic_client.get_pump_settings(self.base_url)
-        with open(PUMP_SETTINGS_PATH, "w") as f:
-            json.dump(pump_settings, f)
+        self.emit('getactivecal', {}, namespace = '/dpu-evolver')
 
     def transform_data(self, data, quads, od_cal, temp_cal):
         od_data_2 = None
@@ -192,11 +187,9 @@ class EvolverNamespace(BaseNamespace):
         set_temp_data = data['config'].get('temp', {}).get('value', None)
 
         if od_data is None or temp_data is None or set_temp_data is None:
-            print('Incomplete data recieved, Error with measurement')
             logger.error('Incomplete data received, error with measurements')
             return None
         if 'NaN' in od_data or 'NaN' in temp_data or 'NaN' in set_temp_data:
-            print('NaN recieved, Error with measurement')
             logger.error('NaN received, error with measurements')
             return None
 
@@ -214,7 +207,7 @@ class EvolverNamespace(BaseNamespace):
             temp_coefficients = temp_cal['coefficients'][quad]
             quad_key = 'quad_{0}'.format(quad)
             for vial in quads[quad_key]:
-                file_name =  "quad-{0}_vial-{1}_temp_config.txt".format(quad,vial)
+                file_name =  "quad_{0}-vial_{1}-temp_config.txt".format(quad,vial)
                 file_path = os.path.join(EXP_DIR, quad_key, 'temp_config', file_name)
                 temp_set_data = np.genfromtxt(file_path, delimiter=',')
                 temp_set = temp_set_data[len(temp_set_data)-1][1]
@@ -245,21 +238,18 @@ class EvolverNamespace(BaseNamespace):
                         logger.error('OD calibration not of supported type!')
                         od_data[quad][vial] = 'NaN'
                 except ValueError:
-                    print("OD Read Error")
                     logger.error('OD read error for vial %d, setting to NaN' % x)
                     od_data[quad][vial] = 'NaN'
                 try:
                     temp_data[quad][vial] = (float(temp_data[quad][vial]) * temp_coefficients[0]) + temp_coefficients[1]
                     logger.debug('temperature from quad_%d vial_%d: %.3f' % (quad, vial, temp_data[quad][vial]))
                 except ValueError:
-                    print("Temp Read Error")
                     logger.error('temperature read error for quad_%d vial_%d, setting to NaN' % (quad, vial))
                     temp_data[quad][vial]  = 'NaN'
                 try:
                     set_temp_data[quad][vial] = (float(set_temp_data[quad][vial]) * temp_coefficients[0]) + temp_coefficients[1]
                     logger.debug('set_temperature from quad_%d vial_%d: %.3f' % (quad, vial, set_temp_data[quad][vial]))
                 except ValueError:
-                    print("Set Temp Read Error")
                     logger.error('set temperature read error for quad_%d vial_%d, setting to NaN' % (quad, vial))
                     set_temp_data[quad][vial]  = 'NaN'
 
@@ -307,28 +297,6 @@ class EvolverNamespace(BaseNamespace):
                    'recurring': False ,'immediate': True}
         self.emit('command', command, namespace='/dpu-evolver')
 
-    def ipp_command(self, addr, vial, rate):
-        #self.stop_all_pumps(regular = False, ipp = False)
-        time.sleep(2)
-        message = ['--'] * 48
-        message[addr] = "{0}|{1}|{2}".format(rate, 1, 1)
-        message[addr+1] = "{0}|{1}|{2}".format(rate, 1, 2)
-        message[addr+2] = "{0}|{1}|{2}".format(rate, 1, 3)
-        self.fluid_command(message)
-        time.sleep(2)
-        message = ['--'] * 48
-        if vial == 'all':
-            for addr in IPP_SELECT_ADDRS:
-                message[addr] = 60
-        else:
-            message[IPP_SELECT_ADDRS[int(vial)]] = 40
-        self.fluid_command(message)
-
-    def arm_fluid_command(self, MESSAGE, active_quads):
-        logger.debug('arm fluid command')
-        command = {'pump_commands': MESSAGE, 'recurring': False, 'active_quads':active_quads}
-        #fluidic_client.influx(base_url, command, active_quads)
-
     def update_chemo(self, data, vials, bolus_in_s, period_config, immediate = False):
         current_pump = data['config']['pump']['value']
 
@@ -357,9 +325,14 @@ class EvolverNamespace(BaseNamespace):
             logger.info('updating chemostat: %s' % MESSAGE)
             self.emit('command', MESSAGE, namespace = '/dpu-evolver')
 
-    def stop_all_pumps(self, ):
+    def stop_all_pumps(self):
+        value = ['0'] * 48
+        ipp_number = 1
+        for ipp_number in range(len(IPP_ADDRESSES)):
+            value[ipp_number] = '{0}|{1}|{2}'.format(0, ipp_number+1, 1)
+
         data = {'param': 'pump',
-                'value': ['0'] * 48,
+                'value': value,
                 'recurring': False,
                 'immediate': True}
         logger.info('stopping all pumps')
@@ -371,18 +344,17 @@ class EvolverNamespace(BaseNamespace):
         if directory is None:
             directory = param
         current_quad = int(quad.split("_")[1])
-        file_name =  "quad-{0}_vial-{1}_{2}.txt".format(current_quad, vial, param)
+        file_name =  "quad_{0}-vial_{1}-{2}.txt".format(current_quad, vial, param)
         file_path = os.path.join(EXP_DIR, quad, directory, file_name)
         text_file = open(file_path, "w")
         for default in defaults:
             text_file.write(default + '\n')
         text_file.close()
 
-    def initialize_exp(self, quads, experiment_params, log_name, quiet, verbose, ip_address, always_yes = False):
+    def initialize_exp(self, quads, robotics_ns, experiment_params, log_name, quiet, verbose, ip_address, always_yes = False):
         self.ip_address = ip_address
         self.experiment_params = experiment_params
-        self.base_url = "http://" + self.ip_address + ":" + str(XARM_PORT)
-        logger.info('initializing experiment')
+        self.robotics_ns = robotics_ns
 
         if os.path.exists(EXP_DIR):
             setup_logging(log_name, quiet, verbose)
@@ -409,6 +381,7 @@ class EvolverNamespace(BaseNamespace):
                 if exp_overwrite == 'y':
                     logger.info('deleting existing data directory')
                     shutil.rmtree(EXP_DIR)
+
                 else:
                     print('Change experiment name in custom_script.py '
                         'and then restart...')
@@ -416,9 +389,11 @@ class EvolverNamespace(BaseNamespace):
                     sys.exit(1)
 
             start_time = time.time()
+            logger.info('initializing experiment')
+
 
             self.request_calibrations()
-            self.request_pump_settings()
+            self.robotics_ns.request_pump_settings()
 
             logger.debug('creating data directories')
             for quad in quads:
@@ -431,8 +406,9 @@ class EvolverNamespace(BaseNamespace):
                 os.makedirs(os.path.join(EXP_DIR, quad, 'ODset'))
                 os.makedirs(os.path.join(EXP_DIR, quad, 'growthrate'))
                 os.makedirs(os.path.join(EXP_DIR, quad, 'chemo_config'))
+                setup_logging(log_name, quiet, verbose)
                 for vial in quads[quad]:
-                    exp_str = "Experiment: {0} quad-{1}_vial-{2}, {3}".format(EXP_NAME, quad, vial, time.strftime("%c"))
+                    exp_str = "Experiment: {0} {1}-vial_{2}, {3}".format(EXP_NAME, quad, vial, time.strftime("%c"))
                     # make OD file
                     self._create_file(vial, quad, 'OD', defaults=[exp_str])
                     # make temperature data file
@@ -492,22 +468,21 @@ class EvolverNamespace(BaseNamespace):
 
     def check_for_calibrations(self):
         result = True
-        if not os.path.exists(OD_CAL_PATH) or not os.path.exists(TEMP_CAL_PATH) or not os.path.exists(PUMP_CAL_PATH) or not os.path.exists(SYRINGE_PUMP_CAL_PATH):
+        if not os.path.exists(OD_CAL_PATH) or not os.path.exists(TEMP_CAL_PATH) or not os.path.exists(SYRINGE_PUMP_CAL_PATH) or not os.path.exists(IPP_CAL_PATH):
             # log and request again
-            logger.warning('Calibrations not received yet, requesting again')
+            logger.warning('calibrations not received yet, requesting again')
             self.request_calibrations()
             result = False
         return result
-
+    
     def check_for_pump_settings(self):
         result = True
         if not os.path.exists(PUMP_SETTINGS_PATH):
             # log and request again
-            logger.warning('Pump settings not received yet, requesting again')
-            self.request_pump_settings()
+            logger.warning('pump settings not received yet, requesting again')
+            self.robotics_ns.request_pump_settings()
             result = False
         return result
-
 
     def save_data(self, data, elapsed_time, quads, parameter):
         if len(data) == 0:
@@ -530,17 +505,24 @@ class EvolverNamespace(BaseNamespace):
         with open(pickle_path, 'wb') as f:
             pickle.dump([start_time, OD_initial], f)
 
-    def get_step_rate(self):
-        syringe_pump_cal = None
-        with open(SYRINGE_PUMP_CAL_PATH) as f:
-            syringe_pump_cal = json.load(f)
-        return syringe_pump_cal['coefficients']
-
     def get_pump_settings(self):
         pump_settings = None
         with open(PUMP_SETTINGS_PATH) as f:
             pump_settings = json.load(f)
         return pump_settings
+
+    def get_flow_rate(self, pump_type):
+        if pump_type == 'syringe_pymp':
+            syringe_pump_cal = None
+            with open(SYRINGE_PUMP_CAL_PATH) as f:
+                syringe_pump_cal = json.load(f)
+            return syringe_pump_cal['coefficients']
+        if pump_type == "ipp":
+            ipp_cal = None
+            with open(IPP_CAL_PATH) as f:
+                ipp_cal = json.load(f)
+            return ipp_cal['coefficients']
+            
 
     def calc_growth_rate(self, vial, gr_start, elapsed_time):
         ODfile_name =  "vial{0}_OD.txt".format(vial)
@@ -628,6 +610,8 @@ class EvolverNamespace(BaseNamespace):
             custom_script.chemostat(self, data, vials, elapsed_time)
         elif mode == 'growthcurve':
             custom_script.growth_curve(self, data, vials, elapsed_time)
+        elif mode == 'turbidostat_HT':
+            custom_script.turbidostat_HT(self, data, vials, elapsed_time, test)
         else:
             # try to load the user function
             # if failing report to user
@@ -636,14 +620,11 @@ class EvolverNamespace(BaseNamespace):
                 func = getattr(custom_script, mode)
                 func(self, data, vials, elapsed_time, test)
             except AttributeError:
-                logger.error('could not find function %s in custom_script.py' %
-                            mode)
-                print('Could not find function %s in custom_script.py '
-                    '- Skipping user defined functions'%
-                    mode)
+                logger.error('could not find function %s in custom_script.py' % mode)
 
     def stop_exp(self):
-        self.stop_all_pumps()
+        logger.debug('stopping pumps')
+        #self.stop_all_pumps()
 
 def setup_logging(filename, quiet, verbose):
     if quiet:
@@ -702,13 +683,24 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(2)
 
-    socketIO = SocketIO(evolver_ip, EVOLVER_PORT)
-    EVOLVER_NS = socketIO.define(EvolverNamespace, '/dpu-evolver')
+    socketIO_eVOLVER = socketio.Client()
+    socketIO_Robotics = socketio.Client()
+
+    EVOLVER_NS = EvolverNamespace('/dpu-evolver')
+    ROBOTICS_NS = RoboticsNamespace('/robotics')
+
+    socketIO_eVOLVER.register_namespace(EVOLVER_NS)
+    socketIO_Robotics.register_namespace(ROBOTICS_NS)
+
+    socketIO_eVOLVER.connect("http://{0}:{1}".format(evolver_ip, EVOLVER_PORT), namespaces=['/dpu-evolver'])
+    socketIO_Robotics.connect("http://{0}:{1}".format(evolver_ip, ROBOTICS_PORT), namespaces=['/robotics'])
+
 
     # start by stopping any existing chemostat
-    EVOLVER_NS.stop_all_pumps()
+    #EVOLVER_NS.stop_all_pumps()
+
     #
-    EVOLVER_NS.start_time = EVOLVER_NS.initialize_exp(QUADS,
+    EVOLVER_NS.start_time = EVOLVER_NS.initialize_exp(QUADS, ROBOTICS_NS,
                                                       experiment_params,
                                                       options.log_name,
                                                       options.quiet,
@@ -716,7 +708,7 @@ if __name__ == '__main__':
                                                       evolver_ip,
                                                       options.always_yes
                                                       )
-
+    
     # Using a non-blocking stream reader to be able to listen
     # for commands from the electron app.
     nbsr = NBSR(sys.stdin)
@@ -734,30 +726,37 @@ if __name__ == '__main__':
             if 'stop-script' in message:
                 logger.info('Stop message received - halting all pumps');
                 EVOLVER_NS.stop_exp()
-                socketIO.disconnect()
+                socketIO_eVOLVER.disconnect()
+                socketIO_Robotics.disconnect()
             if 'pause-script' in message:
                 print('Pausing experiment', flush = True)
                 logger.info('Pausing experiment in dpu')
                 paused = True
                 EVOLVER_NS.stop_exp()
-                socketIO.disconnect()
+                socketIO_eVOLVER.disconnect()
+                socketIO_Robotics.disconnect()
 
             if 'continue-script' in message:
                 print('Restarting experiment', flush = True)
                 logger.info('Restarting experiment')
                 paused = False
-                socketIO.connect()
+                socketIO_eVOLVER.connect("http://{0}:{1}".format(evolver_ip, EVOLVER_PORT), namespaces=['/dpu-evolver'])
+                socketIO_Robotics.connect("http://{0}:{1}".format(evolver_ip, ROBOTICS_PORT), namespaces=['/robotics'])
 
             if not paused:
-                    socketIO.wait(seconds=0.1)
+                    socketIO_eVOLVER.wait()
+                    socketIO_Robotics.wait()
                     if time.time() - reset_connection_timer > 3600 and not paused:
                         # reset connection to avoid buildup of broadcast
                         # messages (unlikely but could happen for very long
                         # experiments with slow dpu code/computer)
-                        logger.info('resetting connection to eVOLVER to avoid '
-                                    'potential buildup of broadcast messages')
-                        socketIO.disconnect()
-                        socketIO.connect()
+                        logger.info('resetting connection to eVOLVER to avoid potential buildup of broadcast messages')
+                        socketIO_eVOLVER.disconnect()
+                        socketIO_Robotics.disconnect()
+
+                        socketIO_eVOLVER.connect("http://{0}:{1}".format(evolver_ip, EVOLVER_PORT), namespaces=['/dpu-evolver'])
+                        socketIO_Robotics.connect("http://{0}:{1}".format(evolver_ip, ROBOTICS_PORT), namespaces=['/robotics'])
+                        
                         reset_connection_timer = time.time()
         except KeyboardInterrupt:
             try:
@@ -765,14 +764,16 @@ if __name__ == '__main__':
                 logger.warning('interrupt received, pausing experiment')
                 EVOLVER_NS.stop_exp()
                 # stop receiving broadcasts
-                socketIO.disconnect()
+                socketIO_eVOLVER.disconnect()
+                socketIO_Robotics.disconnect()              
                 while True:
                     key = input('Experiment paused. Press enter key to restart '
                                 ' or hit Ctrl-C again to terminate experiment')
                     logger.warning('resuming experiment')
                     # no need to have something like "restart_chemo" here
                     # with the new server logic
-                    socketIO.connect()
+                    socketIO_eVOLVER.disconnect()
+                    socketIO_Robotics.disconnect()
                     break
             except KeyboardInterrupt:
                 print('Second Ctrl-C detected, shutting down')
@@ -793,5 +794,6 @@ if __name__ == '__main__':
 
     # stop experiment one last time
     # covers corner case where user presses Ctrl-C twice quickly
-    socketIO.connect()
+    socketIO_eVOLVER.connect("http://{0}:{1}".format(evolver_ip, EVOLVER_PORT), namespaces=['/dpu-evolver'])
+    socketIO_Robotics.connect("http://{0}:{1}".format(evolver_ip, ROBOTICS_PORT), namespaces=['/robotics'])
     EVOLVER_NS.stop_exp()

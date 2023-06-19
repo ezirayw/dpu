@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import math
 import logging
 import os.path
+import time
 
 
 # logger setup
@@ -17,6 +19,7 @@ EXP_NAME = 'test_expt'
 
 # Port for the eVOLVER connection. You should not need to change this unless you have multiple applications on a single RPi.
 EVOLVER_PORT = 8081
+ROBOTICS_PORT = 8080
 
 ##### Identify pump calibration files, define initial values for temperature, stirring, volume, power settings
 
@@ -38,6 +41,14 @@ VOLUME_HT = 5 #mL, determined by efflux needle length
 OPERATION_MODE = 'turbidostat_HT' #use to choose between 'turbidostat', 'chemostat', 'ht_turbidostat', or 'ht_chemostat'
 # if using a different mode, name your function as the OPERATION_MODE variable
 
+IPP_HZ = 20 # frequency for IPP efflux pumps
+IPP_ADDRESSES = {
+    'quad_0': [0, 1, 2],
+    'quad_1': [3, 4,5],
+    'quad_2': [8, 9, 10],
+    'quad_3': [11, 12, 13]
+}
+
 def media_transform(volumes, pump_settings, step_rates, test):
     """ Convert influx volumes to pump motor steps for vial dilutions. Information will be stored in an read accessible JSON file """
     dilutions = {}
@@ -56,15 +67,15 @@ def media_transform(volumes, pump_settings, step_rates, test):
                 vial_name = 'vial_{0}'.format(vial)
                 if test:
                     pump_json[quad_name][vial_name] = 0 # used for debugging fluidics
+                if vial == 10:
+                    pump_json[quad_name][vial_name] = 0
                 else:
-                    pump_json[quad_name][vial_name] = volumes[pump][quad][vial] * step_rates[smoothie_id][pump_id] # convert volume command to syringe pump motor steps
+                    pump_json[quad_name][vial_name] = 200
+                    #pump_json[quad_name][vial_name] = volumes[pump][quad][vial] * step_rates[smoothie_id][pump_id] # convert volume command to syringe pump motor steps
         dilutions[pump] = pump_json
 
-    # save dilutiion steps to JSON
-    #dilutions_path = os.path.join(DILUTIONS_PATH, 'dilutions.json')
-    #with open(dilutions_path, 'w') as f:
-    #    json.dump(dilutions, f)
-    #return dilutions
+    logger.debug('calculated dilutions: %s', (dilutions))
+    return dilutions
 
 def hz_to_rate(hz, c, b):
     return c * math.pow(hz, b)
@@ -72,38 +83,6 @@ def hz_to_rate(hz, c, b):
 def rate_to_hz(rate, c, b):
     """ rate should be in ml/h """
     return math.pow(((rate) / c), 1.0/b)
-
-def ipp_calculations(elapsed_time, eVOLVER):
-
-    # arabinose stock concentration is at 250 mM
-    # Solenoid addresses for each ipp.
-    # Each pump requires 3 addresses. These vars capture the 1st of the three (sequential)
-    v2v_addr = 32
-    ipp_min_waiting_time = 4
-
-    # Sets the minimum amount of time that the experiment must run
-    # before the IPP selection scheme will start
-    bolus_amount = .4 # ml
-    bolus_rate = 10
-    bolus_time = bolus_amount / hz_to_rate(10, c[0], b[0])
-
-    turnover_time = 1 # hours
-    init_rate = .08
-    start_rate = 0.04 # V/h
-
-    # Start ipp protocol
-    if (elapsed_time > ipp_min_waiting_time):
-        if (elapsed_time < ipp_min_waiting_time + bolus_time):
-            # Start bolus
-            print("ipp bolus")
-            rate = bolus_rate
-            vial = 'all'
-        else:
-            rate = rate_to_hz(start_rate * LAGOON_VOLUME, c[0], b[0])
-            vial = 'all'
-
-        print("running ipp cmd. addr: {0}, vial: {1}, rate: {2}".format(v2v_addr, vial, round(rate,3)))
-        eVOLVER.ipp_command(v2v_addr, vial, round(rate,3))
 
 ##### END OF USER DEFINED GENERAL SETTINGS #####
 
@@ -331,19 +310,12 @@ def chemostat(eVOLVER, input_data, vials, elapsed_time):
 
 # def your_function_here(): # good spot to define modular functions for dynamics or feedback
 def turbidostat_HT(eVOLVER, input_data, quads, elapsed_time, test):
-    OD_data = input_data['transformed']['od']
     ##### USER DEFINED VARIABLES #####
-
-    turbidostat_vials = quads #vials is all 72, can set to different range (ex. [[0,1,2,3],[],[0,1,2,3],[0,1,2,3]]) to only trigger tstat on those vials
+    #turbidostat_vials = quads #vials is all 72, can set to different range (ex. [[0,1,2,3],[],[0,1,2,3],[0,1,2,3]]) to only trigger tstat on those vials
+    turbidostat_vials = {'quad_0': [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17]}
     turbidostat_pumps = ['base_media']
     stop_after_n_curves = np.inf #set to np.inf to never stop, or integer value to stop diluting after certain number of growth curves
     OD_values_to_average = 6  # Number of values to calculate the OD average
-
-    active_quads = []
-    for quad in quads:
-        if quads[quad] != []:
-            quad_count = quad.split('_')[1]
-            active_quads.append(float(quad_count))
 
     lower_thresh = []
     upper_thresh = []
@@ -366,13 +338,15 @@ def turbidostat_HT(eVOLVER, input_data, quads, elapsed_time, test):
 
     ##### Turbidostat Settings #####
     #Tunable settings for overflow protection, pump scheduling etc. Unlikely to change between expts
-
-    time_out = 5 #(sec) additional amount of time to run efflux pump
     pump_wait = 3 # (min) minimum amount of time to wait between pump events
 
-    ##### End of Turbidostat Settings #####
+    SYRINGE_PUMP_MESSAGE = []
+    IPP_EFFLUX_MESSAGE = ['--'] * 48
+    ipp_number = 1
 
-    step_rates = eVOLVER.get_step_rate() #read from syringe pump calibration file
+    ##### End of Turbidostat Settings #####
+    syringe_pump_rates = eVOLVER.get_flow_rate('syringe_pump') #read from syringe pump calibration file
+    ipp_rates = eVOLVER.get_flow_rate('ipp') #
     pump_settings = eVOLVER.get_pump_settings()
 
     # Verify that user defined pumps match pump settings
@@ -386,24 +360,25 @@ def turbidostat_HT(eVOLVER, input_data, quads, elapsed_time, test):
             continue
 
     ##### Turbidostat Control Code Below #####
-    SYRINGE_PUMP_MESSAGE = []
     for quad in turbidostat_vials: #main loop through each vial
         for pump in influx_volumes:
             influx_volumes[pump].append([0] * 18)
-        current_quad = quad.split('_')[1]
+        current_quad = quad.split('_')[1]            
+        
+        greatest_volume = 0
         for vial in turbidostat_vials[quad]:
 
             # Update turbidostat configuration files for each vial
             # initialize OD and find OD path
 
-            file_name =  "quad-{0}_vial-{1}_ODset.txt".format(current_quad, vial)
+            file_name =  "quad_{0}-vial_{1}-ODset.txt".format(current_quad, vial)
             ODset_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, quad, 'ODset', file_name)
             data = np.genfromtxt(ODset_path, delimiter=',')
             ODset = data[len(data)-1][1]
             ODsettime = data[len(data)-1][0]
             num_curves=len(data)/2;
 
-            file_name =  "quad-{0}_vial-{1}_OD.txt".format(current_quad, vial)
+            file_name =  "quad_{0}-vial_{1}-OD.txt".format(current_quad, vial)
             OD_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, quad, 'OD', file_name)
             data = eVOLVER.tail_to_np(OD_path, OD_values_to_average)
             average_OD = 0
@@ -441,21 +416,44 @@ def turbidostat_HT(eVOLVER, input_data, quads, elapsed_time, test):
                     file_name =  "quad-{0}_vial-{0}_syringe-pump_log.txt".format(current_quad,vial)
                     file_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, quad, 'syringe-pump_log', file_name)
                     data = np.genfromtxt(file_path, delimiter=',')
-                    last_pump = data[len(data)-1][0]
-                    if ((elapsed_time - last_pump)*60) >= pump_wait: # if sufficient time since last pump, send command to Arduino
-                        logger.info('turbidostat dilution for quad {0} vial {1}'.format(current_quad, vial))
-                        # influx pump
-                        influx_volumes['base_media'][current_quad][vial] = volume_in
-                        text_file = open(file_path, "a+")
-                        text_file.write("{0},{1}\n".format(elapsed_time, volume_in))
-                        text_file.close()
-            else:
-                logger.debug('not enough OD measurements for quad {0} vial{1}'.format(current_quad, vial))
+                    
+                    # influx pump
+                    influx_volumes['base_media'][current_quad][vial] = volume_in
+                    if volume_in > greatest_volume:
+                        greatest_volume = volume_in
 
-    SYRINGE_PUMP_MESSAGE = media_transform(influx_volumes, pump_settings, step_rates, test)
+                    text_file = open(file_path, "a+")
+                    text_file.write("{0},{1}\n".format(elapsed_time, volume_in))
+                    text_file.close()
+            else:
+                logger.debug('not enough OD measurements for quad: %s vial: %s', (current_quad, vial))
+
+        # calculate ipp ON time based on greatest dilution volume
+        #ipp_time = greatest_volume / hz_to_rate(IPP_HZ, ipp_rates[index][0], ipp_rates[index][1])
+        ipp_time = 90
+        ipp_index = 1
+        for ipp_address in IPP_ADDRESSES[quad]:
+            IPP_EFFLUX_MESSAGE[ipp_address] = '{0}|{1}|{2}|{3}'.format(IPP_HZ, ipp_number, ipp_index, ipp_time)
+            ipp_index = ipp_index + 1
+        
+        # setup efflux variables for next quad calculations
+        ipp_number += 1
+
+    SYRINGE_PUMP_MESSAGE = media_transform(influx_volumes, pump_settings, syringe_pump_rates, test)
+
     # send fluidic command only if we are actually turning on any of the pumps
     if SYRINGE_PUMP_MESSAGE != []:
-        eVOLVER.arm_fluid_command(SYRINGE_PUMP_MESSAGE, active_quads)
+        fluidic_commands = {
+            'syringe_pump_message': SYRINGE_PUMP_MESSAGE,
+            'ipp_efflux_message': IPP_EFFLUX_MESSAGE
+        }
+        active_quads = list(turbidostat_vials.keys())
+
+        if eVOLVER.robotics_ns.status['operation'] is None:
+            return
+        
+        if (eVOLVER.robotics_ns.status['operation'] == 'idle'): # if robotics are idle, ready to receive influx command
+            eVOLVER.robotics_ns.start_dilutions(fluidic_commands, active_quads, test=False)
 
         # your_FB_function_here() #good spot to call feedback functions for dynamic temperature, stirring, etc for ind. vials
     # your_function_here() #good spot to call non-feedback functions for dynamic temperature, stirring, etc.
