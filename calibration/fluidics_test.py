@@ -6,9 +6,11 @@ EVOLVER_NS = None
 
 class EvolverNamespace(socketio.ClientNamespace):
 
-    MESSAGE = ['20|1|1|60', '20|1|2|60', '20|1|3|60', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']
+    BASE_MESSAGE = ['$|1|1|*', '$|1|2|*', '$|1|3|*', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']
+    OFF_MESSAGE = ['0|1|1|0', '0|1|2|0', '0|1|3|0', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']
     pump_time = 0
-    
+    frequency = 5
+
     def on_connect(self, *args):
         pass
 
@@ -17,10 +19,14 @@ class EvolverNamespace(socketio.ClientNamespace):
     def on_reconnect(self, *args):
         pass
 
-    def fluid_command(self):
-#        self.MESSAGE = self.MESSAGE.replace('*', str(self.pump_time))
-        command = {'param': 'pump', 'value': self.MESSAGE,
+    def fluid_command(self, off=False):
+        temp_message = [element.replace('*', str(self.pump_time)) for element in self.BASE_MESSAGE]
+        MESSAGE = [element.replace('$', str(self.frequency)) for element in temp_message]
+        command = {'param': 'pump', 'value': MESSAGE,
                    'recurring': False ,'immediate': True}
+        if off == True:
+            command = {'param': 'pump', 'value': self.OFF_MESSAGE,
+            'recurring': False ,'immediate': True}
         self.emit('command', command, namespace='/dpu-evolver')
 
 
@@ -34,12 +40,14 @@ if __name__ == '__main__':
     try:
         while True:
             pump_time = input("Enter IPP pump time (seconds): ")
+            frequency = input("Enter IPP actuation frequency: ")
 
             if int(pump_time):                
                 EVOLVER_NS.pump_time = int(pump_time)
+                EVOLVER_NS.frequency = int(frequency)
                 EVOLVER_NS.fluid_command()
-            else:
-                print("Please enter a integer value")
+            if pump_time == '0':
+                EVOLVER_NS.fluid_command(off=True)
 
 
     except KeyboardInterrupt:

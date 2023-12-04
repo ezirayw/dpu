@@ -2,13 +2,14 @@
 import socketio
 import argparse
 import sys
+import time
 # tell interpreter where to look
 
 sys.path.insert(0,"../experiment/template")
 # import all classes
 from robotic_functions import RoboticsNamespace
 from robotic_functions import PUMP_SETTINGS_PATH
-from custom_script import ROBOTICS_PORT
+#from custom_script import ROBOTICS_PORT
 
 def get_options():
     description = 'Run an eVOLVER experiment from the command line'
@@ -33,7 +34,7 @@ if __name__ == '__main__':
     ROBOTICS_NS = RoboticsNamespace('/robotics')
 
     socketIO_Robotics.register_namespace(ROBOTICS_NS)
-    socketIO_Robotics.connect("http://{0}:{1}".format(evolver_ip, ROBOTICS_PORT), namespaces=['/robotics'])
+    socketIO_Robotics.connect("http://{0}:{1}".format(evolver_ip, 8080), namespaces=['/robotics'])
 
     try:
         check_fill_tubing = input("Is the tubing filled with desired fluid? Enter y/n: ")
@@ -51,6 +52,8 @@ if __name__ == '__main__':
                 for cycle in range(fill_cycles):
                     print(cycle)
                     ROBOTICS_NS.fill_tubing()
+                    time.sleep(7)
+
                 while True:
                     re_check = input("Is tubing filled with fluid? Enter y/n: ")
                     if re_check == 'y' or re_check == 'n':

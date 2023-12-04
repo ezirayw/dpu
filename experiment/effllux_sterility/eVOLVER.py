@@ -11,6 +11,7 @@ import numpy as np
 import json
 import traceback
 from scipy import stats
+from socketIO_client import SocketIO, BaseNamespace
 import socketio
 from nbstreamreader import NonBlockingStreamReader as NBSR
 
@@ -57,6 +58,7 @@ class EvolverNamespace(socketio.ClientNamespace):
     ip_address = None
     exp_dir = SAVE_PATH
     robotics_ns = None
+    broadcast_num = 19
 
     def on_connect(self, *args):
         logger.info('dpu connected to base_eVOLVER server')
@@ -71,6 +73,8 @@ class EvolverNamespace(socketio.ClientNamespace):
         if 'dummy' in data:
             logger.debug('dpu received dummy broadcast')
             return
+        logger.info('Broadcast number: %s', (self.broadcast_num))
+        self.broadcast_num += 1 
         logger.info('Data broadcast received')
         elapsed_time = round((time.time() - self.start_time) / 3600, 4)
         logger.info('Elapsed time: %.4f hours' % elapsed_time)
@@ -120,8 +124,10 @@ class EvolverNamespace(socketio.ClientNamespace):
             return
 
         # run custom functions
-        test = True
-        self.custom_functions(data, QUADS, elapsed_time, test)
+        test = False
+        if self.broadcast_num == 20:
+            self.custom_functions(data, QUADS, elapsed_time, test)
+            self.broadcast_num = 0
         # save variables
         self.save_variables(self.start_time, self.OD_initial)
 
@@ -259,9 +265,10 @@ class EvolverNamespace(socketio.ClientNamespace):
         if delta_t > 0.2:
             logger.info('updating temperatures (max. deltaT is %.2f)' % delta_t)
             coefficients = temp_cal['coefficients']
-            raw_temperatures = [None] * len(quads)
-            for quad in range(len(quads)):
-                raw_temperatures[quad] = str(int((temps[quad][0] - temp_cal['coefficients'][x][1]) / temp_cal['coefficients'][x][0]))
+            #raw_temperatures = [None] * len(quads)
+            raw_temperatures = [1866, 1866, 1866, 1866]
+            #for quad in range(len(quads)):
+             #   raw_temperatures[quad] = str(int((temps[quad][0] - temp_cal['coefficients'][x][1]) / temp_cal['coefficients'][x][0]))
             self.update_temperature(raw_temperatures)
         else:
             # config from server agrees with local config

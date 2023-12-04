@@ -23,14 +23,14 @@ ROBOTICS_PORT = 8080
 
 ##### Identify pump calibration files, define initial values for temperature, stirring, volume, power settings
 
-TEMP_INITIAL = [30] * 16 #degrees C, makes 16-value list
+TEMP_INITIAL = [1866] * 16 #degrees C, makes 16-value list
 TEMP_INITIAL_HT = [30] * 4 #degrees C, makes 4-value list
 #Alternatively enter 16-value list to set different values
 #TEMP_INITIAL = [30,30,30,30,32,32,32,32,34,34,34,34,36,36,36,36]
 #TEMP_INITIAL_HT = [30,20,30,10]
 
 STIR_INITIAL = [8] * 16 #try 8,10,12 etc; makes 16-value list
-STIR_INITIAL_HT = [0, 0, 0, 0] #try 20-75 etc; makes 4-value list
+STIR_INITIAL_HT = [400, 0, 0, 0] #try 20-75 etc; makes 4-value list
 #Alternatively enter 16-value list to set different values
 #STIR_INITIAL = [7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10]
 #STIR_INITIAL_HT = [30,50,40,50]
@@ -68,8 +68,9 @@ def media_transform(volumes, pump_settings, step_rates, test):
                 if test:
                     pump_json[quad_name][vial_name] = 0 # used for debugging fluidics
                 else:
-                    pump_json[quad_name][vial_name] = 250
+                    #pump_json[quad_name][vial_name] = 300
                     #pump_json[quad_name][vial_name] = volumes[pump][quad][vial] * step_rates[smoothie_id][pump_id] # convert volume command to syringe pump motor steps
+                    pump_json[quad_name][vial_name] = volumes[pump][quad][vial] * 200 # convert volume command to syringe pump motor steps
         dilutions[pump] = pump_json
 
     logger.debug('calculated dilutions: %s', (dilutions))
@@ -310,7 +311,8 @@ def chemostat(eVOLVER, input_data, vials, elapsed_time):
 def turbidostat_HT(eVOLVER, input_data, quads, elapsed_time, test):
     ##### USER DEFINED VARIABLES #####
     #turbidostat_vials = quads #vials is all 72, can set to different range (ex. [[0,1,2,3],[],[0,1,2,3],[0,1,2,3]]) to only trigger tstat on those vials
-    turbidostat_vials = {'quad_0': [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17]}
+    turbidostat_vials = {'quad_0': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]}
+    #turbidostat_vials = {'quad_0': [0,2,4,7,9,11,12,14,16]}
     turbidostat_pumps = ['base_media']
     stop_after_n_curves = np.inf #set to np.inf to never stop, or integer value to stop diluting after certain number of growth curves
     OD_values_to_average = 6  # Number of values to calculate the OD average
@@ -356,79 +358,23 @@ def turbidostat_HT(eVOLVER, input_data, quads, elapsed_time, test):
             return
         else:
             continue
+    
 
     ##### Turbidostat Control Code Below #####
     for quad in turbidostat_vials: #main loop through each vial
         for pump in influx_volumes:
             influx_volumes[pump].append([0] * 18)
-        current_quad = quad.split('_')[1]            
-        
-        greatest_volume = 0
-        for vial in turbidostat_vials[quad]:
+        current_quad = int(quad.split('_')[1])
 
+        for vial in turbidostat_vials[quad]:
             # Update turbidostat configuration files for each vial
             # initialize OD and find OD path
+            influx_volumes['base_media'][current_quad][vial] = 1
 
-            file_name =  "quad_{0}-vial_{1}-ODset.txt".format(current_quad, vial)
-            ODset_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, quad, 'ODset', file_name)
-            data = np.genfromtxt(ODset_path, delimiter=',')
-            ODset = data[len(data)-1][1]
-            ODsettime = data[len(data)-1][0]
-            num_curves=len(data)/2;
-
-            file_name =  "quad_{0}-vial_{1}-OD.txt".format(current_quad, vial)
-            OD_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, quad, 'OD', file_name)
-            data = eVOLVER.tail_to_np(OD_path, OD_values_to_average)
-            average_OD = 0
-
-            # Determine whether turbidostat dilutions are needed
-            #enough_ODdata = (len(data) > 7) #logical, checks to see if enough data points (couple minutes) for sliding window
-            collecting_more_curves = (num_curves <= (stop_after_n_curves + 2)) #logical, checks to see if enough growth curves have happened
-
-            if data.size != 0:
-                # Take median to avoid outlier
-                od_values_from_file = data[:,1]
-                average_OD = float(np.median(od_values_from_file))
-
-                #if recently exceeded upper threshold, note end of growth curve in ODset, allow dilutions to occur and growthrate to be measured
-                if (average_OD > upper_thresh[current_quad][vial]) and (ODset != lower_thresh[current_quad][vial]):
-                    text_file = open(ODset_path, "a+")
-                    text_file.write("{0},{1}\n".format(elapsed_time,lower_thresh[current_quad][vial]))
-                    text_file.close()
-                    ODset = lower_thresh[current_quad][vial]
-                    # calculate growth rate
-                    eVOLVER.calc_growth_rate(x, ODsettime, elapsed_time)
-
-                #if have approx. reached lower threshold, note start of growth curve in ODset
-                if (average_OD < (lower_thresh[current_quad][vial] + (upper_thresh[current_quad][vial] - lower_thresh[current_quad][vial]) / 3)) and (ODset != upper_thresh[current_quad][vial]):
-                    text_file = open(ODset_path, "a+")
-                    text_file.write("{0},{1}\n".format(elapsed_time, upper_thresh[current_quad][vial]))
-                    text_file.close()
-                    ODset = upper_thresh[current_quad][vial]
-
-                #if need to dilute to lower threshold, then calculate amount of time to pump
-                if average_OD > ODset and collecting_more_curves:
-
-                    volume_in = - (np.log(lower_thresh[current_quad][vial]/average_OD)*VOLUME)
-
-                    file_name =  "quad-{0}_vial-{0}_syringe-pump_log.txt".format(current_quad,vial)
-                    file_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, quad, 'syringe-pump_log', file_name)
-                    data = np.genfromtxt(file_path, delimiter=',')
-                    
-                    # influx pump
-                    influx_volumes['base_media'][current_quad][vial] = volume_in
-                    if volume_in > greatest_volume:
-                        greatest_volume = volume_in
-
-                    text_file = open(file_path, "a+")
-                    text_file.write("{0},{1}\n".format(elapsed_time, volume_in))
-                    text_file.close()
-            else:
-                logger.debug('not enough OD measurements for quad: %s vial: %s', (current_quad, vial))
 
         # calculate ipp ON time based on greatest dilution volume
         #ipp_time = greatest_volume / hz_to_rate(IPP_HZ, ipp_rates[index][0], ipp_rates[index][1])
-        ipp_time = 30
+        ipp_time = 60
         ipp_index = 1
         for ipp_address in IPP_ADDRESSES[quad]:
             IPP_EFFLUX_MESSAGE[ipp_address] = '{0}|{1}|{2}|{3}'.format(IPP_HZ, ipp_number, ipp_index, ipp_time)

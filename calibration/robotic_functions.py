@@ -11,7 +11,11 @@ PUMP_SETTINGS_PATH = os.path.join(SAVE_PATH, 'pump_settings.json')
 class RoboticsNamespace(socketio.ClientNamespace):
 
     evolver_ns = None
-    status = {'mode': None}
+    status = {
+        'operation': None,
+        'active_quad': None,
+        'active_vials': None
+    }
 
     def on_connect(self, *args):
         logger.info('dpu connected to robotics_eVOLVER server')
@@ -53,6 +57,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
 
     def start_dilutions(self, fluidic_commands, quads, test=True):
         logger.info('dilution routine execution: %s', (fluidic_commands))
+        self.status['operation'] = 'influx'
         data = {'message': fluidic_commands, 'active_quads': quads, 'test': test}
         self.emit('dilutions', data, namespace = '/robotics')
 
