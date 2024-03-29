@@ -1,0 +1,342 @@
+#!/usr/bin/env python3
+
+import numpy as np
+import math
+import logging
+import os.path
+
+# logger setup
+logger = logging.getLogger(__name__)
+
+##### USER DEFINED GENERAL SETTINGS #####
+
+# If using the GUI for data visualization, do not change EXP_NAME!
+# only change if you wish to have multiple data folders within a single
+# directory for a set of scripts
+EXP_NAME = 'test_expt'
+
+# Port for the eVOLVER connection. You should not need to change this unless you have multiple applications on a single RPi.
+EVOLVER_PORT = 8081
+ROBOTICS_PORT = 8080
+
+##### Identify pump calibration files, define initial values for temperature, stirring, volume, power settings
+
+TEMP_INITIAL = [1879, 0, 0, 0] * 4 #degrees C, makes 4-value list
+#Alternatively enter 4-value list to set different values
+#TEMP_INITIAL_HT = [30,20,30,10]
+
+STIR_INITIAL = [80, 0, 0, 0] #try 20-75 etc; makes 4-value list
+#Alternatively enter 16-value list to set different values
+#STIR_INITIAL_HT = [30,50,40,50]
+
+VOLUME_HT = 6.5 #mL, determined by efflux needle length
+
+OPERATION_MODE = 'chemostat_HT' #use to choose between 'turbidostat', 'chemostat', 'ht_turbidostat', or 'ht_chemostat'
+# if using a different mode, name your function as the OPERATION_MODE variable
+
+DILUTION_PERIOD = 0.25 #hrs, dictates how much time to wait in between custom_function executions
+
+IPP_HZ = 15 # frequency for IPP efflux pumps
+IPP_ADDRESSES = {
+    'quad_0': [0, 1, 2],
+    'quad_1': [3, 4,5],
+    'quad_2': [8, 9, 10],
+    'quad_3': [11, 12, 13]
+}
+
+def volume_to_step(volumes, pump_settings, step_rates, test):
+    """ Convert influx volumes to pump motor steps for vial dilutions. Information will be stored in an read accessible JSON file """
+    dilutions = {}
+
+    # scan through fluid command and convert dilution volumes to stepper motor steps based on volume --> steps calibration
+    for pump in volumes:
+        pump_json = {}
+        pump_id = pump_settings['pumps'][pump]['id']
+        smoothie_id = pump_settings['pumps'][pump]['smoothie']
+
+        for quad in range(len(volumes[pump])):
+            quad_name = 'quad_{0}'.format(quad)
+            pump_json[quad_name] = {}
+
+            for vial in range(18):
+                vial_name = 'vial_{0}'.format(vial)
+                if test:
+                    pump_json[quad_name][vial_name] = 0 # used for debugging fluidics
+                else:
+                    #pump_json[quad_name][vial_name] = 300
+                    pump_json[quad_name][vial_name] = volumes[pump][quad][vial] * step_rates[smoothie_id][pump_id] # convert volume command to syringe pump motor steps
+        dilutions[pump] = pump_json
+
+    logger.debug('calculated dilutions: %s', (dilutions))
+    return dilutions
+
+def hz_to_rate(hz, c, b):
+    return c * math.pow(hz, b)
+
+def rate_to_hz(rate, c, b):
+    """ rate should be in ml/h """
+    return math.pow(((rate) / c), 1.0/b)
+
+##### END OF USER DEFINED GENERAL SETTINGS #####
+
+def growth_curve(eVOLVER, input_data, vials, elapsed_time):
+    return
+
+def turbidostat_HT(eVOLVER, input_data, quads, elapsed_time, test):
+    ##### USER DEFINED VARIABLES #####
+    #turbidostat_vials = quads #vials is all 72, can set to different range (ex. [[0,1,2,3],[],[0,1,2,3],[0,1,2,3]]) to only trigger tstat on those vials
+    turbidostat_vials = {'quad_0': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]}
+    #turbidostat_vials = {'quad_0': [0,2,4,7,9,11,12,14,16]}
+    turbidostat_pumps = ['base_media']
+    stop_after_n_curves = np.inf #set to np.inf to never stop, or integer value to stop diluting after certain number of growth curves
+    OD_values_to_average = 6  # Number of values to calculate the OD average
+
+    lower_thresh = []
+    upper_thresh = []
+    for quad in quads:
+        lower_thresh.append([0.2] * len(quads[quad])) #to set all vials to the same value, creates 18-value list
+        upper_thresh.append([0.4] * len(quads[quad])) #to set all vials to the same value, creates 18-value list
+
+    #Alternatively, use 4x18 array to set different thresholds, use 9999 for vials not being used
+    #lower_thresh = [[0.2, 0.2, 0.3, 0.3, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999], [0.2, 0.2, 0.3, 0.3, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999], [0.2, 0.2, 0.3, 0.3, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999], [0.2, 0.2, 0.3, 0.3, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999]]
+    #upper_thresh = [[0.4, 0.4, 0.4, 0.4, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999], [0.4, 0.4, 0.4, 0.4, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999], [0.4, 0.4, 0.4, 0.4, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999], [0.4, 0.4, 0.4, 0.4, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999]]
+
+    ##### END OF USER DEFINED VARIABLES #####
+
+    ##### Turbidostat Settings #####
+    #Tunable settings for overflow protection, pump scheduling etc. Unlikely to change between expts
+    pump_wait = 5 # (min) minimum amount of time to wait between pump events
+
+    SYRINGE_PUMP_MESSAGE = []
+    IPP_EFFLUX_MESSAGE = ['--'] * 48
+    ipp_number = 1
+
+    syringe_pump_rates = eVOLVER.get_flow_rate('syringe_pump') #read from syringe pump calibration file
+    ipp_rates = eVOLVER.get_flow_rate('ipp') #
+    pump_settings = eVOLVER.get_pump_settings()
+
+    # Verify that user defined pumps match pump settings
+    influx_volumes = {}
+    for pump in turbidostat_pumps:
+        influx_volumes[pump] = []
+        if pump not in pump_settings['pumps']:
+            logger.warning('desired pump not in pump settings')
+            return
+
+    ##### End of Turbidostat Settings #####
+
+    ##### Turbidostat Control Code Below #####
+    for quad in turbidostat_vials: #main loop through each vial
+        for pump in influx_volumes:
+            influx_volumes[pump].append([0] * 18)
+        current_quad = int(quad.split('_')[1])
+
+        for vial in turbidostat_vials[quad]:
+            # Update turbidostat configuration files for each vial
+            # initialize OD and find OD path
+            
+            file_name =  "quad{0}_vial{1}-ODset.txt".format(current_quad, vial)
+            ODset_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, 'quad_{0}'.format(current_quad),'ODset', file_name)
+            data = np.genfromtxt(ODset_path, delimiter=',')
+            ODset = data[len(data)-1][1]
+            ODsettime = data[len(data)-1][0]
+            num_curves=len(data)/2
+
+            file_name =  "quad{0}_vial{1}-OD.txt".format(current_quad, vial)
+            OD_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, 'quad_{0}'.format(current_quad), 'OD', file_name)
+            data = eVOLVER.tail_to_np(OD_path, OD_values_to_average)
+            median_OD = 0
+
+            # Determine whether turbidostat dilutions are needed
+            collecting_more_curves = (num_curves <= (stop_after_n_curves + 2)) #logical, checks to see if enough growth curves have happened
+
+            if data.size != 0:
+                # Take median to avoid outlier
+                od_values_from_file = data[:,1]
+                median_OD = float(np.median(od_values_from_file))
+
+                #if recently exceeded upper threshold, note end of growth curve in ODset, allow dilutions to occur and growthrate to be measured
+                if (median_OD > upper_thresh[current_quad][vial]) and (ODset != lower_thresh[current_quad][vial]):
+                    text_file = open(ODset_path, "a+")
+                    text_file.write("{0},{1}\n".format(elapsed_time, lower_thresh[current_quad][vial]))
+                    text_file.close()
+                    ODset = lower_thresh[current_quad][vial]
+                    # calculate growth rate
+                    eVOLVER.calc_growth_rate(current_quad, vial, ODsettime, elapsed_time)
+
+                #if have approx. reached lower threshold, note start of growth curve in ODset
+                if (median_OD < (lower_thresh[current_quad][vial] + (upper_thresh[current_quad][vial] - lower_thresh[current_quad][vial]) / 3)) and (ODset != upper_thresh[current_quad][vial]):
+                    text_file = open(ODset_path, "a+")
+                    text_file.write("{0},{1}\n".format(elapsed_time, upper_thresh[current_quad][vial]))
+                    text_file.close()
+                    ODset = upper_thresh[current_quad][vial]
+
+                if median_OD > ODset and collecting_more_curves:
+                    influx_volumes['base_media'][current_quad][vial] = - np.log(lower_thresh[current_quad][vial]/median_OD)*VOLUME_HT
+
+                    file_name =  "quad{0}_vial{1}-syringe_pump_log.txt".format(quad, vial)
+                    file_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, 'quad_{0}'.format(current_quad), 'syringe_pump_log', file_name)
+                    data = np.genfromtxt(file_path, delimiter=',')
+                    last_pump = data[len(data)-1][0]
+
+                    if ((elapsed_time - last_pump)*60) >= pump_wait: # if sufficient time since last pump, send command to Arduino
+                        logger.info('turbidostat dilution for vial %s in quad %:', (current_quad,vial))
+                        file_name =  "quad{0}_vial{1}-syringe_pump_log.txt".format(current_quad, vial)
+                        file_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, 'quad_{0}'.format(current_quad), 'syringe_pump_log', file_name)
+
+                        text_file = open(file_path, "a+")
+                        text_file.write("{0},{1}\n".format(elapsed_time, influx_volumes['base_media'][current_quad][vial]))
+                        text_file.close()
+            else:
+                logger.debug('not enough OD measurements for vial %s in quad %s', (vial, current_quad))
+
+        # calculate ipp ON time based on greatest dilution volume
+        #ipp_time = greatest_volume / hz_to_rate(IPP_HZ, ipp_rates[index][0], ipp_rates[index][1])
+        ipp_time = 60
+        ipp_index = 1
+        for ipp_address in IPP_ADDRESSES[quad]:
+            IPP_EFFLUX_MESSAGE[ipp_address] = '{0}|{1}|{2}|{3}'.format(IPP_HZ, ipp_number, ipp_index, ipp_time)
+            ipp_index = ipp_index + 1
+        
+        # setup efflux variables for next quad calculations
+        ipp_number += 1
+
+    SYRINGE_PUMP_MESSAGE = volume_to_step(influx_volumes, pump_settings, syringe_pump_rates, test)
+
+    # send fluidic command only if we are actually turning on any of the pumps
+    if SYRINGE_PUMP_MESSAGE != []:
+        fluidic_commands = {
+            'syringe_pump_message': SYRINGE_PUMP_MESSAGE,
+            'ipp_efflux_message': IPP_EFFLUX_MESSAGE
+        }
+        active_quads = list(turbidostat_vials.keys())
+        eVOLVER.robotics_ns.start_dilutions(fluidic_commands, active_quads)
+
+        # your_FB_function_here() #good spot to call feedback functions for dynamic temperature, stirring, etc for ind. vials
+    # your_function_here() #good spot to call non-feedback functions for dynamic temperature, stirring, etc.
+
+    # end of turbidostat() fxn
+            
+def chemostat_HT(eVOLVER, input_data, quads, elapsed_time, test):
+    ##### USER DEFINED VARIABLES #####
+    chemostat_vials = {'quad_0': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]}
+    chemostat_pumps = ['base_media']
+
+    # Note that script uses AND logic, so both start time and start OD must be surpassed
+    start_OD = []
+    start_time = []
+    for quad in quads:
+        start_OD.append([0] * len(quads[quad])) # ~OD600, set to 0 to start chemostate dilutions at any positive OD
+        start_time.append([0]* len(quads[quad])) # hours, set 0 to start immediately
+    OD_values_to_average = 6  # Number of values to calculate the OD average
+
+    stir = [75] * 4
+    #Alternatively, use list to set different rates, use 0 for vials not being used
+    #stir = [80,60,55,85]
+
+    rate_config = []
+    for quad in quads:
+        rate_config.append([0.17] * len(quads[quad])) #to set all vials to the same value, creates 18-value list
+    #UNITS of 1/hr, NOT mL/hr, rate = flowrate/volume, so dilution rate ~ growth rate, set to 0 for unused vials
+    #Alternatively, use [4][18] array to set different rates, use 0 for vials not being used
+    #rate_config = [[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6], [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6],[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6],[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6]]
+    
+    ##### END OF USER DEFINED VARIABLES #####
+
+    ##### Chemostat Settings #####
+
+    SYRINGE_PUMP_MESSAGE = []
+    IPP_EFFLUX_MESSAGE = ['--'] * 48
+    ipp_number = 1
+
+
+    syringe_pump_rates = eVOLVER.get_flow_rate('syringe_pump') #read from syringe pump calibration file
+    ipp_rates = eVOLVER.get_flow_rate('ipp') #
+    pump_settings = eVOLVER.get_pump_settings()
+   
+    # Verify that user defined pumps match pump settings
+    influx_volumes = {}
+    for pump in chemostat_pumps:
+        influx_volumes[pump] = []
+        if pump not in pump_settings['pumps']:
+            logger.warning('desired pump not in pump settings')
+            return
+
+    ##### End of Chemostat Settings #####
+
+    ##### Chemostat Control Code Below #####
+    for quad in chemostat_vials:
+        for pump in influx_volumes:
+            influx_volumes[pump].append([0] * 18)
+        current_quad = int(quad.split('_')[1])
+        
+        for vial in chemostat_vials[quad]: #main loop through each vial
+
+            # Update chemostat configuration files for each vial
+
+            #initialize OD and find OD path
+            file_name =  "quad{0}_vial{1}-OD.txt".format(current_quad, vial)
+            #OD_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, 'quad_{0}'.format(current_quad),'OD', file_name)
+            #data = eVOLVER.tail_to_np(OD_path, OD_values_to_average)
+            data = np.array([0.1, 0.2, 0.2, 0.3, 0.5, 0.6])
+            median_OD = 0
+
+            if data.size != 0: #waits for seven OD measurements (couple minutes) for sliding window
+
+                #calculate median OD
+                #od_values_from_file = data[:,1]
+                od_values_from_file = np.array([0.1, 0.2, 0.2, 0.3, 0.5, 0.6])
+                median_OD = float(np.median(od_values_from_file))
+
+                # set chemostat config path and pull current state from file
+                file_name =  "quad{0}_vial{1}-chemo_config.txt".format(current_quad, vial)
+                chemoconfig_path = os.path.join(eVOLVER.exp_dir, EXP_NAME, 'quad_{0}'.format(current_quad), 'chemo_config', file_name)
+                chemo_config = np.genfromtxt(chemoconfig_path, delimiter=',')
+                last_chemo_iteration = chemo_config[len(chemo_config)-1][1] #should be zero initially, changes each time a new command is written to file
+
+                # if start time has passed and culture has hit start OD, add dilution command for vial
+                if ((elapsed_time > start_time[current_quad][vial]) and (median_OD > start_OD[current_quad][vial])):
+
+                    # calculate the period (i.e. frequency of dilution events) based on user specified growth rate and bolus size
+                    if rate_config[current_quad][vial] > 0:
+                        influx_volumes['base_media'][current_quad][vial] = rate_config[current_quad][vial] * VOLUME_HT * DILUTION_PERIOD # calculate regular dilution volume based on desired dilution rate, culture volume, and period
+                    else: # if no dilutions needed, then just loops with no dilutions
+                        influx_volumes['base_media'][current_quad][vial] = 0
+
+                    # writes command to chemo_config file, for storage
+                    text_file = open(chemoconfig_path, "a+")
+                    text_file.write("{0},{1},{2}\n".format(elapsed_time, (last_chemo_iteration+1), rate_config[current_quad][vial]))
+                    text_file.close()
+            else:
+                logger.info('not enough OD measurements for vial %s in quad %s' % (vial, current_quad))
+        
+        # generate ipp command for efflux
+        ipp_time = 90
+        ipp_index = 1
+        for ipp_address in IPP_ADDRESSES[quad]:
+            IPP_EFFLUX_MESSAGE[ipp_address] = '{0}|{1}|{2}|{3}'.format(IPP_HZ, ipp_number, ipp_index, ipp_time)
+            ipp_index = ipp_index + 1
+        
+        # setup efflux variables for next quad calculations
+        ipp_number += 1
+
+    # transform volumes to syringe pump step commands
+    SYRINGE_PUMP_MESSAGE = volume_to_step(influx_volumes, pump_settings, syringe_pump_rates, test)
+    if SYRINGE_PUMP_MESSAGE != []:
+        fluidic_commands = {
+            'syringe_pump_message': SYRINGE_PUMP_MESSAGE,
+            'ipp_efflux_message': IPP_EFFLUX_MESSAGE
+        }
+        active_quads = list(chemostat_vials.keys())
+
+        if eVOLVER.robotics_ns.status['mode'] is None:
+            return
+        
+        if (eVOLVER.robotics_ns.status['mode'] == 'idle'): # if robotics are idle, ready to send chemostat dilution routine command
+            eVOLVER.robotics_ns.start_dilutions(fluidic_commands, active_quads)
+
+    # end of chemostat() fxn
+
+if __name__ == '__main__':
+    print('Please run eVOLVER.py instead')
+    logger.info('Please run eVOLVER.py instead')

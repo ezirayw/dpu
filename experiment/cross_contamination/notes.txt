@@ -1,0 +1,27 @@
+Cross Contamination Study:
+
+Goal: Examine potential sources of cross contamination during influx:efflux events in continuous culture.
+
+Setup: Innoculate every other vial in a checkerboard pattern to 0.01 OD600. Pattern will look like the following:
+
+Strains:
+0 (no cells)
+1 (no growth on -LEU)
+2 (no growth on -TRP)
+
+Pattern (ensures no neighboring vials with same culture conditions):
+
+0 1 2 0 1 2
+1 2 0 1 2 0
+2 0 1 2 0 1
+
+Media: SDC +Glu +Adenine +Hygro
+
+Chemostat: 0.17/hr dilution rate
+
+Volume: 6.5mL
+
+
+How: In between vial dilutions, arm will undergo wash steps with 70% ethanol. Wash step will consist of dipping arm into vial for 1min and air-drying
+for 15 seconds before moving to next vial.  OD rises above background to ~0.1-0.3 
+

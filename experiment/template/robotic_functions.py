@@ -53,8 +53,8 @@ class RoboticsNamespace(socketio.ClientNamespace):
 
     def start_dilutions(self, fluidic_commands, quads, test=True):
         logger.info('dilution routine execution: %s', (fluidic_commands))
-        data = {'message': fluidic_commands, 'active_quads': quads, 'test': test}
-        self.emit('dilutions', data, namespace = '/robotics')
+        data = {'message': fluidic_commands, 'active_quads': quads, 'test': test, 'mode': 'dilution'}
+        self.emit('influx_snake', data, namespace = '/robotics')
 
     def request_pump_settings(self):
         logger.info('requesting active pump settings')

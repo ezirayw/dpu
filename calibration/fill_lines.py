@@ -3,13 +3,9 @@ import socketio
 import argparse
 import sys
 import time
-# tell interpreter where to look
 
-sys.path.insert(0,"../experiment/template")
 # import all classes
 from robotic_functions import RoboticsNamespace
-from robotic_functions import PUMP_SETTINGS_PATH
-#from custom_script import ROBOTICS_PORT
 
 def get_options():
     description = 'Run an eVOLVER experiment from the command line'

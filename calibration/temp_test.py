@@ -6,7 +6,7 @@ EVOLVER_NS = None
 
 class EvolverNamespace(socketio.ClientNamespace):
 
-    BASE_MESSAGE = ['*',1866,1800,1800]
+    BASE_MESSAGE = ['1879','1856','1800','1800']
     temp_input = 0
 
     def on_connect(self, *args):
@@ -19,9 +19,9 @@ class EvolverNamespace(socketio.ClientNamespace):
 
     def update_temp(self, immediate = True):
         MESSAGE = self.BASE_MESSAGE
-        for index in range(4):
-            if MESSAGE[index] == '*':
-                MESSAGE[index] = int(self.temp_input)
+        #for index in range(4):
+         #   if MESSAGE[index] == '*':
+          #      MESSAGE[index] = str(self.temp_input)
         data = {'param': 'temp', 'value': MESSAGE,
                 'immediate': immediate, 'recurring': True}
         self.emit('command', data, namespace = '/dpu-evolver')

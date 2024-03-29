@@ -58,7 +58,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
 
     def setup_vials(self, fluidic_commands, quads):
         logger.info('setup vials with media prior to innoculation: %s', fluidic_commands)
-        data = {'message': fluidic_commands, 'active_quads': quads, 'mode': 'setup', 'wash': True}
+        data = {'message': fluidic_commands, 'active_quads': quads, 'mode': 'setup'}
         self.emit('influx_snake', data, namespace = '/robotics')
 
     def request_pump_settings(self):

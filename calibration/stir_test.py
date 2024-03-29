@@ -6,7 +6,7 @@ EVOLVER_NS = None
 
 class EvolverNamespace(socketio.ClientNamespace):
 
-    BASE_MESSAGE = ['*','*',0,0]
+    BASE_MESSAGE = ['*',0,0,0]
     stir_input = 0
 
     def on_connect(self, *args):
