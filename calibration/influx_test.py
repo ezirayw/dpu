@@ -22,7 +22,10 @@ def media_transform(pump_list, test, active_quads):
                     pump_json[quad][vial_name] = 0 # used for debugging fluidics
                 else:
                     #pump_json[quad][vial_name] = round(619.47 * 6.435)
-                    pump_json[quad][vial_name] = round(299)
+                    if vial == 17:
+                        pump_json[quad][vial_name] = 0
+                    else:
+                        pump_json[quad][vial_name] = round(299)
         dilutions[pump] = pump_json
     return dilutions
 
