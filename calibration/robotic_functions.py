@@ -13,19 +13,41 @@ class RoboticsNamespace(socketio.ClientNamespace):
     evolver_ns = None
     status = {'mode': None}
 
+
     def on_connect(self, *args):
         logger.info('dpu connected to robotics_eVOLVER server')
+        print('dpu connected to robotics_eVOLVER server')
 
     def on_disconnect(self, *args):
         logger.info('dpu disconnected from robotics_eVOLVER server')
+        print('dpu disconnected from robotics_eVOLVER server')
 
     def on_reconnect(self, *args):
         logger.info('dpu reconnected to robotics_eVOLVER server')
+        print('dpu reconnected to robotics_eVOLVER server')
 
     def on_broadcast(self, data):
         logger.info('Robotics broadcast received')
         self.status = data
 
+    # experiment management functions
+    def pause_experiment(self):
+        logger.info('pausing experiment')
+        print('pausing experiment')
+        self.emit('pause_robotics', {}, namespace = '/robotics')
+
+    def resume_experiment(self):
+        logger.info('resuming experiment')
+        self.emit('resume_robotics', {}, namespace = '/robotics')
+
+    def stop_experiment(self):
+        logger.info('stopping experiment')
+        self.emit('stop_robotics', {}, namespace = '/robotics')
+    
+    def acknowledge(sid, data):
+        print(data)
+
+    # robotic feature functions functions
     def on_active_pump_settings(self, data):
         logger.info("received active pump settings")
         with open(PUMP_SETTINGS_PATH, 'w') as f:
@@ -54,7 +76,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
     def start_dilutions(self, fluidic_commands, quads):
         logger.info('dilution routine execution: %s', fluidic_commands)
         data = {'message': fluidic_commands, 'active_quads': quads, 'mode': 'dilution', 'wash':True}
-        self.emit('influx_snake', data, namespace = '/robotics')
+        self.emit('influx_routine', data, namespace = '/robotics', callback = self.acknowledge)
 
     def setup_vials(self, fluidic_commands, quads):
         logger.info('setup vials with media prior to innoculation: %s', fluidic_commands)
@@ -76,6 +98,8 @@ class RoboticsNamespace(socketio.ClientNamespace):
     def update(self):
         logger.info('updating...')
 
+    def override_status(self, data):
+        self.emit('override_robotics_status', data, namespace = '/robotics' )
 
 if __name__ == '__main__':
     print('Please run eVOLVER.py instead')

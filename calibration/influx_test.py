@@ -20,12 +20,9 @@ def media_transform(pump_list, test, active_quads):
                 vial_name = 'vial_{0}'.format(vial)
                 if test:
                     pump_json[quad][vial_name] = 0 # used for debugging fluidics
-                if vial in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]:
-                    pump_json[quad][vial_name] = 0
-                elif vial == 15:
-                    pump_json[quad][vial_name] = 2700
                 else:
-                    pump_json[quad][vial_name] = round(619.47 * 6.435)
+                    #pump_json[quad][vial_name] = round(619.47 * 6.435)
+                    pump_json[quad][vial_name] = round(299)
         dilutions[pump] = pump_json
     return dilutions
 
@@ -60,8 +57,8 @@ if __name__ == '__main__':
     }
     
     ipp_number = 1
-    ipp_hz = 15 # frequency for IPP efflux pumps
-    ipp_time = 30
+    ipp_hz = 20 # frequency for IPP efflux pumps
+    ipp_time = 120
     ipp_index = 1
     for quad in turbidostat_vials:
         for ipp_address in IPP_ADDRESSES[quad]:
@@ -75,7 +72,7 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(2)
 
-    socketIO_Robotics = socketio.Client()
+    socketIO_Robotics = socketio.Client(handle_sigint=False)
     ROBOTICS_NS = RoboticsNamespace('/robotics')
 
     socketIO_Robotics.register_namespace(ROBOTICS_NS)
@@ -88,12 +85,36 @@ if __name__ == '__main__':
         'syringe_pump_message': SYRINGE_PUMP_MESSAGE,
         'ipp_efflux_message': IPP_EFFLUX_MESSAGE
     }
-    try:
-#        ROBOTICS_NS.start_dilutions(fluidic_commands, active_quads)
-        ROBOTICS_NS.setup_vials(fluidic_commands, active_quads)
-        
+    
+    ROBOTICS_NS.start_dilutions(fluidic_commands, active_quads)
+    #ROBOTICS_NS.setup_vials(fluidic_commands, active_quads)
 
-    except KeyboardInterrupt:
-        print('exiting stir test, goodbye!')
-        socketIO_Robotics.disconnect()
-        sys.exit(0)
+    while True:
+        try:
+            socketIO_Robotics.wait()        
+        
+        except KeyboardInterrupt:
+            try:
+                print('Ctrl-C detected')
+                ROBOTICS_NS.pause_experiment()
+
+                while True:
+                    exit_key = input('Experiment paused. Press enter key to restart or hit Ctrl-C again to terminate experiment')
+                    print('resuming experiment')
+                    ROBOTICS_NS.resume_experiment()
+                    break
+            
+            except KeyboardInterrupt:
+                print('Second Ctrl-C detected, stopping experiment')                
+                ROBOTICS_NS.stop_experiment()
+                break
+        
+        except Exception as e:
+            print('Error detected, stopping experiment')
+            print(e)
+            ROBOTICS_NS.stop_experiment()
+            break
+    
+    socketIO_Robotics.disconnect()
+
+

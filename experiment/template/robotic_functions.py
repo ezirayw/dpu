@@ -13,6 +13,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
     evolver_ns = None
     status = {'mode': None}
 
+
     def on_connect(self, *args):
         logger.info('dpu connected to robotics_eVOLVER server')
 
@@ -26,6 +27,23 @@ class RoboticsNamespace(socketio.ClientNamespace):
         logger.info('Robotics broadcast received')
         self.status = data
 
+    # experiment management functions
+    def pause_experiment(self):
+        logger.info('pausing experiment')
+        self.emit('pause_experiment', {}, namespace = '/robotics')
+
+    def resume_experiment(self):
+        logger.info('resuming experiment')
+        self.emit('resume_experiment', {}, namespace = '/robotics')
+
+    def stop_experiment(self):
+        logger.info('stopping experiment')
+        self.emit('stop_experiment', {}, namespace = '/robotics')
+    
+    def acknowledge(data):
+        print(data)
+
+    # robotic feature functions functions
     def on_active_pump_settings(self, data):
         logger.info("received active pump settings")
         with open(PUMP_SETTINGS_PATH, 'w') as f:
@@ -51,9 +69,14 @@ class RoboticsNamespace(socketio.ClientNamespace):
         logger.info('prime pumps for dilution events')
         self.emit('prime_pump', {}, namespace = '/robotics')
 
-    def start_dilutions(self, fluidic_commands, quads, test=True):
-        logger.info('dilution routine execution: %s', (fluidic_commands))
-        data = {'message': fluidic_commands, 'active_quads': quads, 'test': test, 'mode': 'dilution'}
+    def start_dilutions(self, fluidic_commands, quads):
+        logger.info('dilution routine execution: %s', fluidic_commands)
+        data = {'message': fluidic_commands, 'active_quads': quads, 'mode': 'dilution', 'wash':True}
+        self.emit('influx_snake', data, namespace = '/robotics', callback = self.acknowledge)
+
+    def setup_vials(self, fluidic_commands, quads):
+        logger.info('setup vials with media prior to innoculation: %s', fluidic_commands)
+        data = {'message': fluidic_commands, 'active_quads': quads, 'mode': 'setup', 'wash': True}
         self.emit('influx_snake', data, namespace = '/robotics')
 
     def request_pump_settings(self):
@@ -71,6 +94,8 @@ class RoboticsNamespace(socketio.ClientNamespace):
     def update(self):
         logger.info('updating...')
 
+    def override_status(self, data):
+        self.emit('override_robotics_status', data, namespace = '/robotics' )
 
 if __name__ == '__main__':
     print('Please run eVOLVER.py instead')

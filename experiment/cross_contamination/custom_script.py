@@ -47,6 +47,7 @@ IPP_ADDRESSES = {
 def volume_to_step(volumes, pump_settings, step_rates, test):
     """ Convert influx volumes to pump motor steps for vial dilutions. Information will be stored in an read accessible JSON file """
     dilutions = {}
+    print(volumes)
 
     # scan through fluid command and convert dilution volumes to stepper motor steps based on volume --> steps calibration
     for pump in volumes:
@@ -64,7 +65,7 @@ def volume_to_step(volumes, pump_settings, step_rates, test):
                     pump_json[quad_name][vial_name] = 0 # used for debugging fluidics
                 else:
                     #pump_json[quad_name][vial_name] = 300
-                    pump_json[quad_name][vial_name] = volumes[pump][quad][vial] * step_rates[smoothie_id][pump_id] # convert volume command to syringe pump motor steps
+                    pump_json[quad_name][vial_name] = volumes[pump][quad][vial] * 619.47 # convert volume command to syringe pump motor steps
         dilutions[pump] = pump_json
 
     logger.debug('calculated dilutions: %s', (dilutions))
