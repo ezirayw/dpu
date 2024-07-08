@@ -47,13 +47,13 @@ class RoboticsNamespace(socketio.ClientNamespace):
         self.emit('stop_robotics', {}, namespace = '/robotics')
     
     def acknowledge_routine(self, data):
-        logger.debug(data)
-        print(data)
+        logger.info(data)
+        #print(data)
         self.running_routine = False
 
     def acknowledge_retreival(self, data):
-        logger.debug(data)
-        print(data)
+        logger.info(data)
+        #print(data)
         if data['type'] == 'pump':
             self.pump_config = data['data']
         if data['type'] == 'robotics':
@@ -100,7 +100,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
     
     def request_robotics_status(self):
         logger.info('requesting robotics status')
-        self.emit('request_robotics_status', {}, namespace = '/robotics', callable=self.acknowledge_retreival)
+        self.emit('request_robotics_status', {}, namespace = '/robotics', callback=self.acknowledge_retreival)
     
     def stop_robotics(self):
         logger.info('stopping robotics')
