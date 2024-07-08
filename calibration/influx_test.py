@@ -92,9 +92,10 @@ if __name__ == '__main__':
 
     while True:            
         try:
+            ROBOTICS_NS.request_robotics_status()
             if ROBOTICS_NS.status['mode'] == 'idle' and ROBOTICS_NS.running_routine == False:
                 ROBOTICS_NS.start_dilutions(fluidic_commands, active_quads)
-                ROBOTICS_NS.setup_vials(fluidic_commands, active_quads)
+                #ROBOTICS_NS.setup_vials(fluidic_commands, active_quads)
             #socketIO_Robotics.wait()       
         
         except KeyboardInterrupt:

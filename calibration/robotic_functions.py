@@ -13,6 +13,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
     evolver_ns = None
     status = {'mode': None}
     running_routine = False
+    pump_config = None
 
     def on_connect(self, *args):
         logger.info('dpu connected to robotics_eVOLVER server')
@@ -31,17 +32,6 @@ class RoboticsNamespace(socketio.ClientNamespace):
         print('Robotics broadcast received')
         self.status = data
 
-    def on_current_robotics_status(self, data):
-        logger.info("received current pump config")
-        print("received current pump config")
-        with open(PUMP_CONFIG_PATH, 'w') as f:
-            json.dump(data['data'], f)
-    
-    def on_current_robotics_status(self, data):
-        logger.info("received active pump settings")
-        print("received current robotics status")
-        self.status = data
-
     # experiment management functions
     def pause_experiment(self):
         logger.info('pausing experiment')
@@ -56,9 +46,18 @@ class RoboticsNamespace(socketio.ClientNamespace):
         logger.info('stopping experiment')
         self.emit('stop_robotics', {}, namespace = '/robotics')
     
-    def acknowledge(self, sid, data):
+    def acknowledge_routine(self, data):
+        logger.debug(data)
         print(data)
         self.running_routine = False
+
+    def acknowledge_retreival(self, data):
+        logger.debug(data)
+        print(data)
+        if data['type'] == 'pump':
+            self.pump_config = data['data']
+        if data['type'] == 'robotics':
+            self.status = data['data']
 
     # robotic feature functions functions
     def arm_test(self):
@@ -82,33 +81,34 @@ class RoboticsNamespace(socketio.ClientNamespace):
         self.emit('prime_pump', {}, namespace = '/robotics')
 
     def start_dilutions(self, fluidic_commands, quads):
-        logger.info('dilution routine execution: %s', fluidic_commands)
+        logger.info('dilution routine execution: %s' % fluidic_commands)
+        print('dilution routine execution: {}'.format(fluidic_commands))
         data = {'message': fluidic_commands, 'active_quads': quads, 'mode': 'dilution', 'wash':True}
         self.running_routine = True
-        self.emit('influx_routine', data, namespace = '/robotics', callback = self.acknowledge)
+        self.emit('influx_routine', data, namespace = '/robotics', callback = self.acknowledge_routine)
 
     def setup_vials(self, fluidic_commands, quads):
-        logger.info('setup vials with media prior to innoculation: %s', fluidic_commands)
+        logger.info('setup vials with media prior to innoculation: %s' % fluidic_commands)
+        print('setup vials with media prior to innoculation: {}'.format(fluidic_commands))
         data = {'message': fluidic_commands, 'active_quads': quads, 'mode': 'setup', 'wash': True}
         self.running_routine = True
-        self.emit('influx_snake', data, namespace = '/robotics')
+        self.emit('influx_routine', data, namespace = '/robotics', callback=self.acknowledge_routine)
 
     def request_pump_settings(self):
-        logger.info('requesting active pump settings')
-        self.emit('get_pump_settings', {}, namespace = '/robotics')
+        logger.info('requesting pump settings')
+        self.emit('request_pump_settings', {}, namespace = '/robotics', callback=self.acknowledge_retreival)
     
     def request_robotics_status(self):
         logger.info('requesting robotics status')
-        self.emit('request_robotics_status', {}, namespace = '/robotics')
+        self.emit('request_robotics_status', {}, namespace = '/robotics', callable=self.acknowledge_retreival)
     
     def stop_robotics(self):
         logger.info('stopping robotics')
         self.emit('stop_robotics', {}, namespace = '/robotics')
 
-    def update(self):
-        logger.info('updating...')
-
     def override_status(self, data):
+        logger.info('overriding robotics status with following command: %s' % data)
+        print('overriding robotics status with following command: {}'.format(data))
         self.emit('override_robotics_status', data, namespace = '/robotics' )
 
 if __name__ == '__main__':
