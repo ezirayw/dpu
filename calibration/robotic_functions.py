@@ -6,13 +6,13 @@ import socketio
 logger = logging.getLogger(__name__)
 
 SAVE_PATH = os.path.dirname(os.path.realpath(__file__))
-PUMP_SETTINGS_PATH = os.path.join(SAVE_PATH, 'pump_settings.json')
+PUMP_CONFIG_PATH = os.path.join(SAVE_PATH, 'pump_config.json')
 
 class RoboticsNamespace(socketio.ClientNamespace):
 
     evolver_ns = None
     status = {'mode': None}
-
+    running_routine = False
 
     def on_connect(self, *args):
         logger.info('dpu connected to robotics_eVOLVER server')
@@ -28,6 +28,18 @@ class RoboticsNamespace(socketio.ClientNamespace):
 
     def on_broadcast(self, data):
         logger.info('Robotics broadcast received')
+        print('Robotics broadcast received')
+        self.status = data
+
+    def on_current_robotics_status(self, data):
+        logger.info("received current pump config")
+        print("received current pump config")
+        with open(PUMP_CONFIG_PATH, 'w') as f:
+            json.dump(data['data'], f)
+    
+    def on_current_robotics_status(self, data):
+        logger.info("received active pump settings")
+        print("received current robotics status")
         self.status = data
 
     # experiment management functions
@@ -44,15 +56,11 @@ class RoboticsNamespace(socketio.ClientNamespace):
         logger.info('stopping experiment')
         self.emit('stop_robotics', {}, namespace = '/robotics')
     
-    def acknowledge(sid, data):
+    def acknowledge(self, sid, data):
         print(data)
+        self.running_routine = False
 
     # robotic feature functions functions
-    def on_active_pump_settings(self, data):
-        logger.info("received active pump settings")
-        with open(PUMP_SETTINGS_PATH, 'w') as f:
-            json.dump(data['data'], f)
-
     def arm_test(self):
         logger.info('running arm test')
         self.emit('arm_test', {}, namespace='/robotics')
@@ -76,11 +84,13 @@ class RoboticsNamespace(socketio.ClientNamespace):
     def start_dilutions(self, fluidic_commands, quads):
         logger.info('dilution routine execution: %s', fluidic_commands)
         data = {'message': fluidic_commands, 'active_quads': quads, 'mode': 'dilution', 'wash':True}
+        self.running_routine = True
         self.emit('influx_routine', data, namespace = '/robotics', callback = self.acknowledge)
 
     def setup_vials(self, fluidic_commands, quads):
         logger.info('setup vials with media prior to innoculation: %s', fluidic_commands)
         data = {'message': fluidic_commands, 'active_quads': quads, 'mode': 'setup', 'wash': True}
+        self.running_routine = True
         self.emit('influx_snake', data, namespace = '/robotics')
 
     def request_pump_settings(self):

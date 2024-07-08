@@ -1,5 +1,6 @@
 
 import socketio
+import time
 import argparse
 import sys
 
@@ -88,13 +89,13 @@ if __name__ == '__main__':
         'syringe_pump_message': SYRINGE_PUMP_MESSAGE,
         'ipp_efflux_message': IPP_EFFLUX_MESSAGE
     }
-    
-    ROBOTICS_NS.start_dilutions(fluidic_commands, active_quads)
-    #ROBOTICS_NS.setup_vials(fluidic_commands, active_quads)
 
-    while True:
+    while True:            
         try:
-            socketIO_Robotics.wait()        
+            if ROBOTICS_NS.status['mode'] == 'idle' and ROBOTICS_NS.running_routine == False:
+                ROBOTICS_NS.start_dilutions(fluidic_commands, active_quads)
+                ROBOTICS_NS.setup_vials(fluidic_commands, active_quads)
+            #socketIO_Robotics.wait()       
         
         except KeyboardInterrupt:
             try:
