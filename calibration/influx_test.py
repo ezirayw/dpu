@@ -91,13 +91,16 @@ if __name__ == '__main__':
     }
 
     last_time = None
+    routine_number = 0
     while True:            
         try:
             current_time = time.time()
-            if last_time is None or current_time - last_time > 5:
+            if last_time is None or current_time - last_time > 10:
                 last_time = current_time
                 ROBOTICS_NS.request_robotics_status()
                 if ROBOTICS_NS.status['mode'] == 'idle' and ROBOTICS_NS.running_routine == False:
+                    routine_number += 1
+                    print('running routine number: {}'.format(routine_number))
                     ROBOTICS_NS.start_dilutions(fluidic_commands, active_quads)
                     #ROBOTICS_NS.setup_vials(fluidic_commands, active_quads)
                 #socketIO_Robotics.wait()       
@@ -125,5 +128,3 @@ if __name__ == '__main__':
             break
     
     socketIO_Robotics.disconnect()
-
-

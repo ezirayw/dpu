@@ -74,11 +74,11 @@ class RoboticsNamespace(socketio.ClientNamespace):
 
     def fill_tubing(self):
         logger.info('fill tubing lines with fluid')
-        self.emit('fill_tubing', {}, namespace = '/robotics')
+        self.emit('fill_tubing_routine', {}, namespace = '/robotics')
 
     def prime_pumps(self):
         logger.info('prime pumps for dilution events')
-        self.emit('prime_pump', {}, namespace = '/robotics')
+        self.emit('prime_pumps_routine', {}, namespace = '/robotics')
 
     def start_dilutions(self, fluidic_commands, quads):
         logger.info('dilution routine execution: %s' % fluidic_commands)
