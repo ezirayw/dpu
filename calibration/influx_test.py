@@ -3,9 +3,9 @@ import socketio
 import time
 import argparse
 import sys
-
-# import all classes
 from robotic_functions import RoboticsNamespace
+import logging
+import os
 
 def media_transform(pump_list, test, active_quads):
     dilutions = {}
@@ -42,15 +42,18 @@ def get_options():
     return parser.parse_args(), parser
 
 if __name__ == '__main__':
+
+    # setup command line parser
     options, parser = get_options()
-
     evolver_ip = options.ip_address
-    test_volume = options.test_volume
-    test_pumps = {'base_media':
-                  {'quad_1': [0] * 18}
-                  }
 
-    #turbidostat_vials = {'quad_0': [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17],'quad_1': [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17]}
+    if evolver_ip is None:
+        print('No IP address found. Please provide on the command line or through the GUI.')
+        parser.print_help()
+        sys.exit(2)
+
+    # setup influx and efflux commands
+    # turbidostat_vials = {'quad_0': [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17],'quad_1': [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17]}
     turbidostat_vials = {'quad_0': [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17]}
     IPP_EFFLUX_MESSAGE = ['--'] * 48
     IPP_ADDRESSES = {
@@ -59,7 +62,10 @@ if __name__ == '__main__':
         'quad_2': [8, 9, 10],
         'quad_3': [11, 12, 13]
     }
+    test_volume = options.test_volume
+    test_pumps = {'base_media': {'quad_1': [0] * 18}}
     
+    # efflux commands
     ipp_number = 1
     ipp_hz = 20 # frequency for IPP efflux pumps
     ipp_time = 120
@@ -71,24 +77,25 @@ if __name__ == '__main__':
                 # setup efflux variables for next quad calculations
         ipp_number += 1
 
-    if evolver_ip is None:
-        print('No IP address found. Please provide on the command line or through the GUI.')
-        parser.print_help()
-        sys.exit(2)
-
-    socketIO_Robotics = socketio.Client(handle_sigint=False)
-    ROBOTICS_NS = RoboticsNamespace('/robotics')
-
-    socketIO_Robotics.register_namespace(ROBOTICS_NS)
-    socketIO_Robotics.connect("http://{0}:{1}".format(evolver_ip, 8080), namespaces=['/robotics'])
-
     active_quads = list(turbidostat_vials.keys())
     SYRINGE_PUMP_MESSAGE = media_transform(test_pumps, test_volume,active_quads)
 
     fluidic_commands = {
         'syringe_pump_message': SYRINGE_PUMP_MESSAGE,
-        'ipp_efflux_message': IPP_EFFLUX_MESSAGE
-    }
+        'ipp_efflux_message': IPP_EFFLUX_MESSAGE}
+
+    # setup logger
+    logger = logging.getLogger('evolver')
+    save_path = os.path.dirname(os.path.realpath(__file__))
+    filename = os.path.join(save_path, 'evolver.log')
+    logging.basicConfig(format='%(asctime)s - %(name)s - [%(levelname)s] ''- %(message)s\n', datefmt='%Y-%m-%d %H:%M:%S', filename=filename, level=logging.INFO)
+
+    # setup client namespaces for eVOLVER and robotics
+    socketIO_Robotics = socketio.Client(handle_sigint=False)
+    ROBOTICS_NS = RoboticsNamespace('/robotics')
+
+    socketIO_Robotics.register_namespace(ROBOTICS_NS)
+    socketIO_Robotics.connect("http://{0}:{1}".format(evolver_ip, 8080), namespaces=['/robotics'])
 
     last_time = None
     routine_number = 0
@@ -100,7 +107,7 @@ if __name__ == '__main__':
                 ROBOTICS_NS.request_robotics_status()
                 if ROBOTICS_NS.status['mode'] == 'idle' and ROBOTICS_NS.running_routine == False:
                     routine_number += 1
-                    print('running routine number: {}'.format(routine_number))
+                    logger.info('running routine number: %s', (routine_number))
                     ROBOTICS_NS.start_dilutions(fluidic_commands, active_quads)
                     #ROBOTICS_NS.setup_vials(fluidic_commands, active_quads)
                 #socketIO_Robotics.wait()       
