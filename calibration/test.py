@@ -3,9 +3,6 @@ import socketio
 import argparse
 import sys
 
-# import all classes
-from robotic_functions import RoboticsNamespace
-
 def get_options():
     description = 'Override ROBOTICS_STATUS for HT_eVOLVER'
     parser = argparse.ArgumentParser(description=description)
@@ -27,30 +24,12 @@ if __name__ == '__main__':
     mode = options.mode
     prime = options.syringe_prime
     reset_arm = options.reset_arm
-    
-    if evolver_ip is None:
-        print('No IP address found. Please provide on the command line or through the GUI.')
-        parser.print_help()
-        sys.exit(2)
-    if mode is not None and mode not in ['idle', 'fill_tubing', 'priming', 'influx', 'pause', 'resume']:
-        print('Invalid mode. Must be one of: idle, fill_tubing, priming, influx')
-        parser.print_help()
-        sys.exit(2)
-
-    socketIO_Robotics = socketio.Client(handle_sigint=False)
-    ROBOTICS_NS = RoboticsNamespace('/robotics')
-
-    socketIO_Robotics.register_namespace(ROBOTICS_NS)
-    socketIO_Robotics.connect("http://{0}:{1}".format(evolver_ip, 8080), namespaces=['/robotics'])
 
     try:
-        payload = {}
-        payload['mode'] = options.mode
-        payload['primed'] = prime
-        payload['reset_arm'] = reset_arm
-    
-        ROBOTICS_NS.override_status(payload)
-        socketIO_Robotics.wait()
+        print(evolver_ip)
+        print(mode)
+        print(prime)
+        print(reset_arm)
 
     except KeyboardInterrupt:
         print('exiting override, goodbye!')

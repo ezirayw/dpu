@@ -11,6 +11,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
     logger = logging.getLogger(__name__)
     save_path = os.path.dirname(os.path.realpath(__file__))
     pump_config_path = os.path.join(save_path, 'pump_config.json')
+    broadcast_counter = 0
 
     def on_connect(self, *args):
         self.logger.info('dpu connected to robotics_eVOLVER server')
@@ -106,6 +107,11 @@ class RoboticsNamespace(socketio.ClientNamespace):
         self.logger.info('overriding robotics status with following command: %s' % data)
         print('overriding robotics status with following command: {}'.format(data))
         self.emit('override_robotics_status', data, namespace = '/robotics' )
+
+    def reconnect(self, data):
+        self.logger.info('reconnect to robotics with following command: %s' % data)
+        print('reconnect to robotics with following command: {}'.format(data))
+        self.emit('reconnect_robotics', data, namespace = '/robotics' )
 
 if __name__ == '__main__':
     print('Please run eVOLVER.py instead')

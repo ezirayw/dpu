@@ -101,16 +101,15 @@ if __name__ == '__main__':
     routine_number = 0
     while True:            
         try:
-            current_time = time.time()
-            if last_time is None or current_time - last_time > 10:
-                last_time = current_time
-                ROBOTICS_NS.request_robotics_status()
-                if ROBOTICS_NS.status['mode'] == 'idle' and ROBOTICS_NS.running_routine == False:
+            if ROBOTICS_NS.status['mode'] == 'idle' and ROBOTICS_NS.running_routine == False:
+                ROBOTICS_NS.broadcast_counter += 1
+                
+                if ROBOTICS_NS.broadcast_counter == 2:
                     routine_number += 1
+                    ROBOTICS_NS.broadcast_counter = 0
                     logger.info('running routine number: %s', (routine_number))
                     ROBOTICS_NS.start_dilutions(fluidic_commands, active_quads)
                     #ROBOTICS_NS.setup_vials(fluidic_commands, active_quads)
-                #socketIO_Robotics.wait()       
         
         except KeyboardInterrupt:
             try:

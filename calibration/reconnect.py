@@ -7,33 +7,26 @@ import sys
 from robotic_functions import RoboticsNamespace
 
 def get_options():
-    description = 'Override ROBOTICS_STATUS for HT_eVOLVER'
+    description = 'Reconnect to HT_eVOLVER robotics'
     parser = argparse.ArgumentParser(description=description)
 
-    parser.add_argument('-m', '--mode', action='store', dest='mode',
-                        help='Robotics mode to set ROBOTICS_STATUS to. Must be one of: idle, fill_tubing, priming, influx')
-    parser.add_argument('-p', '--syringe_prime', action='store_true', dest='syringe_prime',
-                        help='set syringe pump primed status. Must be one of: True, False')
+    parser.add_argument('-x', '--xarm', action='store_true', dest='xarm',
+                        help='reconnect to xArm')
+    parser.add_argument('-o', '--octoprint', action='store_true', dest='octoprint',
+                        help='reconnect to OctoPrint servers')
     parser.add_argument('-i', '--ip-address', action='store', dest='ip_address',
                         help='IP address of eVOLVER to run experiment on.')
-    parser.add_argument('-r', '--reset-arm', action='store_true', dest='reset_arm',
-                        help='reset xArm settings')
     return parser.parse_args(), parser
 
 if __name__ == '__main__':
     options, parser = get_options()
 
     evolver_ip = options.ip_address
-    mode = options.mode
-    prime = options.syringe_prime
-    reset_arm = options.reset_arm
+    xarm = options.xarm
+    octoprint = options.octoprint
     
     if evolver_ip is None:
         print('No IP address found. Please provide on the command line or through the GUI.')
-        parser.print_help()
-        sys.exit(2)
-    if mode is not None and mode not in ['idle', 'fill_tubing', 'priming', 'influx', 'pause', 'resume']:
-        print('Invalid mode. Must be one of: idle, fill_tubing, priming, influx')
         parser.print_help()
         sys.exit(2)
 
@@ -45,11 +38,10 @@ if __name__ == '__main__':
 
     try:
         payload = {}
-        payload['mode'] = options.mode
-        payload['primed'] = prime
-        payload['reset_arm'] = reset_arm
+        payload['xarm'] = xarm
+        payload['octoprint'] = octoprint
     
-        ROBOTICS_NS.override_status(payload)
+        ROBOTICS_NS.reconnect(payload)
         socketIO_Robotics.wait()
 
     except KeyboardInterrupt:
