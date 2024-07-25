@@ -30,9 +30,10 @@ class RoboticsNamespace(socketio.ClientNamespace):
         self.logger.info('Robotics broadcast received')
         self.status = data
 
-        if self.status['mode'] == 'idle' and self.running_routine == False:
+        if self.status['mode'] == 'idle':
             self.broadcast_counter += 1
-        elif self.broadcast_counter > 2:
+        
+        if self.broadcast_counter == 3:
             self.broadcast_counter = 0
 
     # experiment management functions
