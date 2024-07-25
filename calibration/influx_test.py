@@ -101,7 +101,7 @@ if __name__ == '__main__':
     routine_number = 0
     while True:            
         try:                
-            if ROBOTICS_NS.ready_to_run:
+            if ROBOTICS_NS.broadcast_counter == 2 and ROBOTICS_NS.running_routine == False:
                 routine_number += 1
                 logger.info('running routine number: %s', (routine_number))
                 ROBOTICS_NS.start_dilutions(fluidic_commands, active_quads)

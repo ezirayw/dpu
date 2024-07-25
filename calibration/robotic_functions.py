@@ -32,11 +32,8 @@ class RoboticsNamespace(socketio.ClientNamespace):
 
         if self.status['mode'] == 'idle' and self.running_routine == False:
             self.broadcast_counter += 1
-            if self.broadcast_counter >= 3:
-                self.ready_to_run = True
+            if self.broadcast_counter > 2:
                 self.broadcast_counter = 0
-            else:
-                self.ready_to_run = False
 
     # experiment management functions
     def pause_experiment(self):
