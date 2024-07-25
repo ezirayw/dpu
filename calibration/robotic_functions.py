@@ -12,6 +12,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
     save_path = os.path.dirname(os.path.realpath(__file__))
     pump_config_path = os.path.join(save_path, 'pump_config.json')
     broadcast_counter = 0
+    ready_to_run = False
 
     def on_connect(self, *args):
         self.logger.info('dpu connected to robotics_eVOLVER server')
@@ -28,6 +29,14 @@ class RoboticsNamespace(socketio.ClientNamespace):
     def on_broadcast(self, data):
         self.logger.info('Robotics broadcast received')
         self.status = data
+
+        if self.status['mode'] == 'idle' and self.running_routine == False:
+            self.broadcast_counter += 1
+            if self.broadcast_counter >= 3:
+                self.ready_to_run = True
+                self.broadcast_counter = 0
+            else:
+                self.ready_to_run = False
 
     # experiment management functions
     def pause_experiment(self):

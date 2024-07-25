@@ -48,6 +48,8 @@ if __name__ == '__main__':
         payload['mode'] = options.mode
         payload['primed'] = prime
         payload['reset_arm'] = reset_arm
+
+        print(payload)
     
         ROBOTICS_NS.override_status(payload)
         socketIO_Robotics.wait()
