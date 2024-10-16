@@ -81,8 +81,8 @@ if __name__ == '__main__':
     SYRINGE_PUMP_MESSAGE = media_transform(test_pumps, test_volume,active_quads)
 
     fluidic_commands = {
-        'syringe_pump_message': SYRINGE_PUMP_MESSAGE,
-        'ipp_efflux_message': IPP_EFFLUX_MESSAGE}
+        'syringe_pump_command': SYRINGE_PUMP_MESSAGE,
+        'ipp_efflux_command': IPP_EFFLUX_MESSAGE}
 
     # setup logger
     logger = logging.getLogger('evolver')

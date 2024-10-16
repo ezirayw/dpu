@@ -12,7 +12,6 @@ class RoboticsNamespace(socketio.ClientNamespace):
     save_path = os.path.dirname(os.path.realpath(__file__))
     pump_config_path = os.path.join(save_path, 'pump_config.json')
     broadcast_counter = 0
-    ready_to_run = False
 
     def on_connect(self, *args):
         self.logger.info('dpu connected to robotics_eVOLVER server')
@@ -52,12 +51,17 @@ class RoboticsNamespace(socketio.ClientNamespace):
     
     def acknowledge_routine(self, data):
         self.logger.info(data)
-        #print(data)
-        self.running_routine = False
+        print(data)
+
+        # if valid done status (True or False) is received, set running_routine to False
+        if data['done'] != 'error':
+            self.running_routine = False
+        if data['done'] == False:
+            self.logger.warn('failed to initiate %s routine, robotics probably not in compatible state' % data['mode'])
 
     def acknowledge_retreival(self, data):
         self.logger.info(data)
-        #print(data)
+        print(data)
         if data['type'] == 'pump':
             self.pump_config = data['data']
         if data['type'] == 'robotics':
@@ -80,21 +84,26 @@ class RoboticsNamespace(socketio.ClientNamespace):
         self.logger.info('fill tubing lines with fluid')
         self.emit('fill_tubing_routine', {}, namespace = '/robotics')
 
-    def prime_pumps(self):
-        self.logger.info('prime pumps for dilution events')
-        self.emit('prime_pumps_routine', {}, namespace = '/robotics')
+    def prime_influx_pumps(self, syringe_pumps={}):
+        self.logger.info('prime influx syringe pumps')
+        self.emit('prime_influx_routine', syringe_pumps, namespace = '/robotics')
+    
+    def prime_efflux_pumps(self, quads):
+        self.logger.info('prime efflux IPPs pumps')
+        data = {'active_quads': quads}
+        self.emit('prime_efflux_routine', data, namespace = '/robotics')            
 
     def start_dilutions(self, fluidic_commands, quads):
         self.logger.info('dilution routine execution: %s' % fluidic_commands)
         print('dilution routine execution: {}'.format(fluidic_commands))
-        data = {'message': fluidic_commands, 'active_quads': quads, 'mode': 'dilution', 'wash':True}
+        data = {'commands': fluidic_commands, 'active_quads': quads, 'mode': 'dilution', 'wash':True}
         self.running_routine = True
         self.emit('influx_routine', data, namespace = '/robotics', callback = self.acknowledge_routine)
 
     def setup_vials(self, fluidic_commands, quads):
         self.logger.info('setup vials with media prior to innoculation: %s' % fluidic_commands)
         print('setup vials with media prior to innoculation: {}'.format(fluidic_commands))
-        data = {'message': fluidic_commands, 'active_quads': quads, 'mode': 'setup', 'wash': True}
+        data = {'commands': fluidic_commands, 'active_quads': quads, 'mode': 'setup', 'wash': True}
         self.running_routine = True
         self.emit('influx_routine', data, namespace = '/robotics', callback=self.acknowledge_routine)
 
