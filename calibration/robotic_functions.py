@@ -90,20 +90,20 @@ class RoboticsNamespace(socketio.ClientNamespace):
     
     def prime_efflux_pumps(self, quads):
         self.logger.info('prime efflux IPPs pumps')
-        data = {'active_quads': quads}
+        data = {'target_quads': quads}
         self.emit('prime_efflux_routine', data, namespace = '/robotics')            
 
     def start_dilutions(self, fluidic_commands, quads):
         self.logger.info('dilution routine execution: %s' % fluidic_commands)
         print('dilution routine execution: {}'.format(fluidic_commands))
-        data = {'commands': fluidic_commands, 'active_quads': quads, 'mode': 'dilution', 'wash':True}
+        data = {'commands': fluidic_commands, 'target_quads': quads, 'mode': 'dilution', 'wash':True}
         self.running_routine = True
         self.emit('influx_routine', data, namespace = '/robotics', callback = self.acknowledge_routine)
 
     def setup_vials(self, fluidic_commands, quads):
         self.logger.info('setup vials with media prior to innoculation: %s' % fluidic_commands)
         print('setup vials with media prior to innoculation: {}'.format(fluidic_commands))
-        data = {'commands': fluidic_commands, 'active_quads': quads, 'mode': 'setup', 'wash': True}
+        data = {'commands': fluidic_commands, 'target_quads': quads, 'mode': 'setup', 'wash': True}
         self.running_routine = True
         self.emit('influx_routine', data, namespace = '/robotics', callback=self.acknowledge_routine)
 
