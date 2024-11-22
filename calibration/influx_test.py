@@ -22,11 +22,7 @@ def media_transform(pump_list, test, active_quads):
                 if test:
                     pump_json[quad][vial_name] = 0 # used for debugging fluidics
                 else:
-                    #pump_json[quad][vial_name] = round(619.47 * 6.435)
-                    if vial == 17:
-                        pump_json[quad][vial_name] = 0
-                    else:
-                        pump_json[quad][vial_name] = round(299)
+                    pump_json[quad][vial_name] = round(619.47 * 6)
         dilutions[pump] = pump_json
     return dilutions
 
@@ -34,10 +30,12 @@ def get_options():
     description = 'Run an eVOLVER experiment from the command line'
     parser = argparse.ArgumentParser(description=description)
 
-    parser.add_argument('-i', '--ip-address', action='store', dest='ip_address',
+    parser.add_argument('-i', '--ip_address', action='store', dest='ip_address', required=True,
                         help='IP address of eVOLVER to run experiment on.')
+    parser.add_argument('-m', '--mode', action='store', dest='mode', required=True,
+                        help='Set to either fill_vials or start_dilutions to select what mode to operate influx system in')
     parser.add_argument('-t', '--test-volume', action='store_true',
-                           help='Disable to dispense volumes with syringe pumps')
+                        help='Add test flag to set influx volumes to 0 mL. Useful for testing purposes.')
     
     return parser.parse_args(), parser
 
@@ -46,39 +44,26 @@ if __name__ == '__main__':
     # setup command line parser
     options, parser = get_options()
     evolver_ip = options.ip_address
+    mode = options.mode()
 
-    if evolver_ip is None:
-        print('No IP address found. Please provide on the command line or through the GUI.')
+    if mode not in ['fill_vials', 'start_dilutions']:
         parser.print_help()
-        sys.exit(2)
+        sys.exit('Invalid mode. Must be one of: fill_vials, start_dilutions')
 
-    # setup influx and efflux commands
     # turbidostat_vials = {'quad_0': [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17],'quad_1': [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17]}
     turbidostat_vials = {'quad_0': [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17]}
-    IPP_EFFLUX_MESSAGE = ['--'] * 48
-    IPP_ADDRESSES = {
-        'quad_0': [0, 1, 2],
-        'quad_1': [3, 4,5],
-        'quad_2': [8, 9, 10],
-        'quad_3': [11, 12, 13]
-    }
     test_volume = options.test_volume
-    test_pumps = {'base_media': {'quad_1': [0] * 18}}
+    test_pumps = {'base_media_0': {'quad_0': [0] * 18}}
     
     # efflux commands
-    ipp_number = 1
-    ipp_hz = 20 # frequency for IPP efflux pumps
-    ipp_time = 120
-    ipp_index = 1
+    IPP_EFFLUX_MESSAGE = {}
+    ipp_hz = 5 # frequency for IPP efflux pumps
+    ipp_time = 90
     for quad in turbidostat_vials:
-        for ipp_address in IPP_ADDRESSES[quad]:
-            IPP_EFFLUX_MESSAGE[ipp_address] = '{0}|{1}|{2}|{3}'.format(ipp_hz, ipp_number, ipp_index, ipp_time)
-            ipp_index = ipp_index + 1
-                # setup efflux variables for next quad calculations
-        ipp_number += 1
+        IPP_EFFLUX_MESSAGE[quad] = {'frequency': ipp_hz, 'duration': ipp_time, 'polarity': 0}
 
     active_quads = list(turbidostat_vials.keys())
-    SYRINGE_PUMP_MESSAGE = media_transform(test_pumps, test_volume,active_quads)
+    SYRINGE_PUMP_MESSAGE = media_transform(test_pumps, test_volume, active_quads)
 
     fluidic_commands = {
         'syringe_pump_command': SYRINGE_PUMP_MESSAGE,
@@ -97,16 +82,18 @@ if __name__ == '__main__':
     socketIO_Robotics.register_namespace(ROBOTICS_NS)
     socketIO_Robotics.connect("http://{0}:{1}".format(evolver_ip, 8080), namespaces=['/robotics'])
 
-    last_time = None
     routine_number = 0
     while True:            
         try:                
             if ROBOTICS_NS.broadcast_counter == 2 and ROBOTICS_NS.running_routine == False:
                 routine_number += 1
                 logger.info('running routine number: %s', (routine_number))
-                ROBOTICS_NS.start_dilutions(fluidic_commands, active_quads)
-                #ROBOTICS_NS.setup_vials(fluidic_commands, active_quads)
-    
+                
+                if mode == 'fill_vials':
+                    ROBOTICS_NS.fill_vials_syringe_pumps(fluidic_commands, active_quads)
+                if mode == 'start_dilutions':
+                    ROBOTICS_NS.start_dilutions_syringe_pumps(fluidic_commands, active_quads)
+
         except KeyboardInterrupt:
             try:
                 print('Ctrl-C detected')
@@ -120,7 +107,7 @@ if __name__ == '__main__':
             
             except KeyboardInterrupt:
                 print('Second Ctrl-C detected, stopping experiment')                
-                ROBOTICS_NS.stop_experiment()
+                ROBOTICS_NS.exit_experiment()
                 break
         
         except Exception as e:
@@ -130,3 +117,4 @@ if __name__ == '__main__':
             break
     
     socketIO_Robotics.disconnect()
+    sys.exit('exiting influx_test.py, goodbye!')

@@ -1,12 +1,12 @@
 import socketio
 import sys
-
+import argparse
 
 EVOLVER_NS = None
 
 class EvolverNamespace(socketio.ClientNamespace):
 
-    BASE_MESSAGE_0 = ['$|1|1|*', '$|1|2|*', '$|1|3|*', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']
+    BASE_MESSAGE_0 = ['$|1|&|*', '$|1|2|*', '$|1|@|*', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']
     BASE_MESSAGE_1 = ['--', '--', '--','$|2|1|*', '$|2|2|*', '$|2|3|*', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']
 
     OFF_MESSAGE_0 = ['0|1|1|0', '0|1|2|0', '0|1|3|0', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']
@@ -15,6 +15,7 @@ class EvolverNamespace(socketio.ClientNamespace):
     pump_time = None
     frequency = None
     layer = None
+    flow_direction = None
 
     def on_connect(self, *args):
         pass
@@ -30,6 +31,12 @@ class EvolverNamespace(socketio.ClientNamespace):
             #self.emit('command', command, namespace='/dpu-evolver')
 
             temp_message = [element.replace('*', str(self.pump_time)) for element in self.BASE_MESSAGE_0]
+            if self.flow_direction == 0:
+                temp_message = [element.replace('&', '1') for element in temp_message]
+                temp_message = [element.replace('@', '3') for element in temp_message]
+            if self.flow_direction == 1:
+                temp_message = [element.replace('&', '3') for element in temp_message]
+                temp_message = [element.replace('@', '1') for element in temp_message]
             MESSAGE = [element.replace('$', str(self.frequency)) for element in temp_message]
             command = {'param': 'pump', 'value': MESSAGE, 'recurring': False ,'immediate': True}
 
@@ -47,28 +54,36 @@ class EvolverNamespace(socketio.ClientNamespace):
 
             self.emit('command', command, namespace='/dpu-evolver')
 
+def get_options():
+    description = 'Run an eVOLVER experiment from the command line'
+    parser = argparse.ArgumentParser(description=description)
+
+    parser.add_argument('-i', '--ip_address', action='store', dest='ip_address', required=True,
+                        help='IP address of eVOLVER to run experiment on.')
+
 if __name__ == '__main__':
+
+    options, parser = get_options()
+    evolver_ip = options.ip_address
 
     socketIO_eVOLVER = socketio.Client()
     EVOLVER_NS = EvolverNamespace('/dpu-evolver')
     socketIO_eVOLVER.register_namespace(EVOLVER_NS)
-    socketIO_eVOLVER.connect("http://{0}:{1}".format('192.168.1.15', '8081'), namespaces=['/dpu-evolver'])
+    socketIO_eVOLVER.connect("http://{0}:{1}".format(evolver_ip, '8081'), namespaces=['/dpu-evolver'])
    
     try:
         while True:
             pump_time = input("Enter IPP pump time (seconds): ")
             frequency = input("Enter IPP actuation frequency: ")
             layer = input("Enter layer to flow through: ")
+            direction = input("Enter direction to flow: ")
         
             EVOLVER_NS.layer = int(layer)
             EVOLVER_NS.pump_time = int(pump_time)
             EVOLVER_NS.frequency = int(frequency)
-            
+            EVOLVER_NS.flow_direction = int(direction) # 0 for efflux, 1 for prime
             EVOLVER_NS.fluid_command()
 
-
     except KeyboardInterrupt:
-        print('exiting stir test, goodbye!')
         socketIO_eVOLVER.disconnect()
-        sys.exit(0)
-
+        sys.exit('user interrupt detected, exiting ipp_test.py')

@@ -12,9 +12,11 @@ def get_options():
 
     parser.add_argument('-m', '--mode', action='store', dest='mode',
                         help='Robotics mode to set ROBOTICS_STATUS to. Must be one of: idle, fill_tubing, priming, influx')
-    parser.add_argument('-p', '--syringe_prime', action='store_true', dest='syringe_prime',
-                        help='set syringe pump primed status. Must be one of: True, False')
-    parser.add_argument('-i', '--ip-address', action='store', dest='ip_address',
+    parser.add_argument('-s', '--syringe_prime', action='store_true', dest='syringe_prime',
+                        help='set syringe pump primed status. default is False')
+    parser.add_argument('-e', '--efflux_ipp', action='store_true', dest='efflux_ipp',
+                        help='set efflux ipps primed status. default is False')
+    parser.add_argument('-i', '--ip_address', action='store', dest='ip_address', required=True,
                         help='IP address of eVOLVER to run experiment on.')
     parser.add_argument('-r', '--reset-arm', action='store_true', dest='reset_arm',
                         help='reset xArm settings')
@@ -25,17 +27,13 @@ if __name__ == '__main__':
 
     evolver_ip = options.ip_address
     mode = options.mode
-    prime = options.syringe_prime
+    prime_influx = options.syringe_prime
+    prime_efflux = options.efflux_ipp
     reset_arm = options.reset_arm
     
-    if evolver_ip is None:
-        print('No IP address found. Please provide on the command line or through the GUI.')
-        parser.print_help()
-        sys.exit(2)
     if mode is not None and mode not in ['idle', 'fill_tubing', 'priming', 'influx', 'pause', 'resume']:
-        print('Invalid mode. Must be one of: idle, fill_tubing, priming, influx')
         parser.print_help()
-        sys.exit(2)
+        sys.exit('Invalid mode. Must be one of: idle, fill_tubing, priming, influx')
 
     socketIO_Robotics = socketio.Client(handle_sigint=False)
     ROBOTICS_NS = RoboticsNamespace('/robotics')
@@ -46,8 +44,8 @@ if __name__ == '__main__':
     try:
         payload = {}
         payload['mode'] = options.mode
-        payload['primed'] = prime
-        payload['reset_arm'] = reset_arm
+        payload['prime_status'] = {'influx': prime_influx, 'efflux': prime_efflux}
+        payload['reset_xArm'] = reset_arm
 
         print(payload)
     
@@ -55,5 +53,5 @@ if __name__ == '__main__':
         socketIO_Robotics.wait()
 
     except KeyboardInterrupt:
-        print('exiting override, goodbye!')
-        sys.exit()
+        socketIO_Robotics.disconnect()
+        sys.exit('exiting override.py, goodbye!')
