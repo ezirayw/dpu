@@ -43,10 +43,11 @@ if __name__ == '__main__':
                 not_filled = True
                 while not_filled:
                     fill_cycles = int(input("Enter number of pipette cycles to run: "))
+                    pipette_volume = int(input("Enter volume to pipette in syringe pump steps: "))
                     print("Running {0} pipette cycles".format(fill_cycles))
                     for cycle in range(fill_cycles):
                         print(cycle)
-                        ROBOTICS_NS.pipette()
+                        ROBOTICS_NS.pipette({'base_media_0': pipette_volume})
                         while ROBOTICS_NS.running_routine == True:
                             time.sleep(0.1)
 

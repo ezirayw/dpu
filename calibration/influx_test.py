@@ -44,7 +44,7 @@ if __name__ == '__main__':
     # setup command line parser
     options, parser = get_options()
     evolver_ip = options.ip_address
-    mode = options.mode()
+    mode = options.mode
 
     if mode not in ['fill_vials', 'start_dilutions']:
         parser.print_help()
@@ -92,7 +92,7 @@ if __name__ == '__main__':
                 if mode == 'fill_vials':
                     ROBOTICS_NS.fill_vials_syringe_pumps(fluidic_commands, active_quads)
                 if mode == 'start_dilutions':
-                    ROBOTICS_NS.start_dilutions_syringe_pumps(fluidic_commands, active_quads)
+                    ROBOTICS_NS.start_dilutions(fluidic_commands, active_quads)
 
         except KeyboardInterrupt:
             try:
