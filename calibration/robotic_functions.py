@@ -17,16 +17,16 @@ class RoboticsNamespace(socketio.ClientNamespace):
 
     def on_connect(self, *args):
         self.logger.info('dpu connected to robotics_eVOLVER server')
-        print('dpu connected to robotics_eVOLVER server')
+        #print('dpu connected to robotics_eVOLVER server')
         self.request_robotics_status()
 
     def on_disconnect(self, *args):
         self.logger.info('dpu disconnected from robotics_eVOLVER server')
-        print('dpu disconnected from robotics_eVOLVER server')
+        #print('dpu disconnected from robotics_eVOLVER server')
 
     def on_reconnect(self, *args):
         self.logger.info('dpu reconnected to robotics_eVOLVER server')
-        print('dpu reconnected to robotics_eVOLVER server')
+        #print('dpu reconnected to robotics_eVOLVER server')
 
     def on_broadcast(self, data):
         self.logger.info('Robotics broadcast received')
@@ -41,7 +41,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
     # experiment management functions
     def pause_experiment(self):
         self.logger.info('pausing experiment')
-        print('pausing experiment')
+        #print('pausing experiment')
         self.emit('pause_robotics', {}, namespace = '/robotics')
 
     def resume_experiment(self):
@@ -117,7 +117,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
         if self.status['mode'] == 'idle':
             self.running_routine = True
             self.logger.info('dilution routine execution: %s' % fluidic_commands)
-            print('dilution routine execution: {}'.format(fluidic_commands))
+            #print('dilution routine execution: {}'.format(fluidic_commands))
             data = {'commands': fluidic_commands, 'target_quads': quads, 'mode': 'dilution'}
             self.emit('dilution_routine', data, namespace = '/robotics', callback = self.acknowledge_routine)
         else:
@@ -132,7 +132,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
         if self.status['mode'] == 'idle':
             self.running_routine = True
             self.logger.info('fill vials media and/or other fluids via syringe pumps: %s' % fluidic_commands)
-            print('setup vials with media prior to innoculation: {}'.format(fluidic_commands))
+            #print('setup vials with media prior to innoculation: {}'.format(fluidic_commands))
             data = {'commands': fluidic_commands, 'target_quads': quads, 'hardware': 'syringe_pumps'}
             self.emit('fill_vials_routine', data, namespace = '/robotics', callback=self.acknowledge_routine)
         else:
@@ -147,7 +147,7 @@ class RoboticsNamespace(socketio.ClientNamespace):
         if self.status['mode'] == 'idle':
             self.running_routine = True
             self.logger.info('fill vials with media and/or other fluids via efflux IPPs')
-            print('fill vials with media and/or other fluids via efflux IPPs')
+            #print('fill vials with media and/or other fluids via efflux IPPs')
             data = {'target_quads': quads, 'hardware': 'ipp'}
             self.emit('fill_vials_routine', data, namespace = '/robotics', callback=self.acknowledge_routine)
         else:
@@ -167,13 +167,13 @@ class RoboticsNamespace(socketio.ClientNamespace):
 
     def override_status(self, data):
         self.logger.info('overriding robotics status with following command: %s' % data)
-        print('overriding robotics status with following command: {}'.format(data))
+        #print('overriding robotics status with following command: {}'.format(data))
         self.emit('override_robotics_status', data, namespace = '/robotics' )
 
     def reconnect(self, data):
         self.logger.info('reconnect to robotics with following command: %s' % data)
-        print('reconnect to robotics with following command: {}'.format(data))
+        #print('reconnect to robotics with following command: {}'.format(data))
         self.emit('reconnect_robotics', data, namespace = '/robotics' )
 
 if __name__ == '__main__':
-    print('Please run eVOLVER.py instead')
+    #print('Please run eVOLVER.py instead')

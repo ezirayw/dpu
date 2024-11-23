@@ -77,15 +77,16 @@ if __name__ == '__main__':
     if mode == 'pipette':
         if ROBOTICS_NS.status['prime_status']['influx'] == True:                
             try:
-                fill_cycles = input("Enter number of pipette cycles to run: ")
-                fill_cycles = int(fill_cycles)
-                print("Running {0} pipette cycles".format(fill_cycles))
-                for cycle in range(fill_cycles):
-                    print(cycle)
-                    pipette_command = {'base_media_0': 300}
-                    ROBOTICS_NS.pipette(pipette_command)
-                    while ROBOTICS_NS.running_routine == True:
-                        time.sleep(0.1)
+                while True:
+                    fill_cycles = input("Enter number of pipette cycles to run: ")
+                    fill_cycles = int(fill_cycles)
+                    print("Running {0} pipette cycles".format(fill_cycles))
+                    for cycle in range(fill_cycles):
+                        print(cycle)
+                        pipette_command = {'base_media_0': 300}
+                        ROBOTICS_NS.pipette(pipette_command)
+                        while ROBOTICS_NS.running_routine == True:
+                            time.sleep(0.1)
             
             except KeyboardInterrupt:
                 socketIO_Robotics.disconnect()
