@@ -33,6 +33,8 @@ def get_options():
     parser.add_argument('-i', '--ip_address', action='store', dest='ip_address', required=True,
                         help='IP address of eVOLVER to run experiment on.')
 
+    return parser.parse_args(), parser
+
 if __name__ == '__main__':
     
     options, parser = get_options()

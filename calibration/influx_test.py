@@ -22,7 +22,7 @@ def media_transform(pump_list, test, active_quads):
                 if test:
                     pump_json[quad][vial_name] = 0 # used for debugging fluidics
                 else:
-                    pump_json[quad][vial_name] = round(619.47 * 6)
+                    pump_json[quad][vial_name] = round(619.47 * 2)
         dilutions[pump] = pump_json
     return dilutions
 
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     routine_number = 0
     while True:            
         try:                
-            if ROBOTICS_NS.broadcast_counter == 2 and ROBOTICS_NS.running_routine == False:
+            if ROBOTICS_NS.broadcast_counter == 3 and ROBOTICS_NS.running_routine == False:
                 routine_number += 1
                 logger.info('running routine number: %s', (routine_number))
                 
