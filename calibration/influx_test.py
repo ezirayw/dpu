@@ -58,7 +58,7 @@ if __name__ == '__main__':
     # efflux commands
     IPP_EFFLUX_MESSAGE = {}
     ipp_hz = 5 # frequency for IPP efflux pumps
-    ipp_time = 90
+    ipp_time = 120
     for quad in turbidostat_vials:
         IPP_EFFLUX_MESSAGE[quad] = {'frequency': ipp_hz, 'duration': ipp_time, 'polarity': 0}
 
