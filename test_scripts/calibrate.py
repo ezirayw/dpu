@@ -1,10 +1,7 @@
 import sys
 import os
-import time
-from numpy.matlib import astype
 import socketio
 import argparse
-import yaml
 import numpy as np
 from scipy.optimize import curve_fit
 from typing import TypedDict
@@ -12,6 +9,17 @@ import matplotlib.pyplot as plt
 import json
 import datetime
 from htevolver_client import HTEvolverNamespace
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - [%(levelname)s] - %(message)s\n",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.INFO,
+    filename="./logs/htevolver_calibrate.log",
+)
+
 
 DEFAULT_VIALS_TEMP = [0, 5, 8, 9, 12, 17]
 DEFAULT_VIALS_OD = list(range(18))
@@ -19,6 +27,7 @@ DEFAULT_NUM_STANDARDS: int = 18
 MAX_TEMP: int = 1500
 MIN_TEMP: int = 2500
 READ_NUM: int = 3
+STANDARD_NUM_MIN: int = 4
 
 
 class CalibrationData(TypedDict):
@@ -69,9 +78,7 @@ def get_options():
     return parser.parse_args(), parser
 
 
-def collect_temp_data(
-    htevolver_client: HTEvolverNamespace, station_list: list[int], num_standards: int, config: dict
-) -> dict[int, CalibrationData]:
+def collect_temp_data(htevolver_client: HTEvolverNamespace, station_list: list[int], num_standards: int) -> dict[int, CalibrationData]:
     # create empty data structure for storing broadcast readings, calibration data, and temperature standards
     # account for room temperture, min, and max setpoints by adding 3 array lengths
     voltage_triplet: dict[int, np.ndarray] = {}
@@ -81,7 +88,7 @@ def collect_temp_data(
     calibration_steps = (num_standards * 2) + 3
     for station in station_list:
         voltage_triplet[station] = np.zeros(3)
-        temperature_measurements[station] = np.zeros(len(config["default_vials_temp"]))
+        temperature_measurements[station] = np.zeros(len(DEFAULT_VIALS_TEMP))
         calibration_data[station] = {
             "voltage": np.zeros(calibration_steps),
             "standards": np.zeros(calibration_steps),
@@ -103,7 +110,7 @@ def collect_temp_data(
     print("Room temperature reading starting, do not move vials or exit...")
     current_counter = htevolver_client.broadcast_counter
     read_num = 0
-    while read_num < conf["read_num"]:
+    while read_num < READ_NUM:
         # check to see if last stored counter matches client tracked broadcast_couter (change indicates new readings have arrived)
         if current_counter != htevolver_client.broadcast_counter:
             # add data to triplet structure and increment broadcast counter check and read number
@@ -117,7 +124,7 @@ def collect_temp_data(
     for station in station_list:
         temperature_input = None
         print(f"\nMeasure vial temperatures for station {station} with probe to generate temperature standards")
-        for position_index, vial_position in enumerate(config["default_vials_temp"]):
+        for position_index, vial_position in enumerate(DEFAULT_VIALS_TEMP):
             while True:
                 try:
                     temperature_input = float(input(f"Enter temperature (C) value for vial slot {vial_position} in station {station}: "))
@@ -137,9 +144,9 @@ def collect_temp_data(
     # using the room temperature setpoint, calculate all other setpoints
     for station in station_list:
         above_rt = np.delete(
-            np.round(np.linspace(config["max_temp"], calibration_data[station]["voltage"][room_temp_step_num], num_standards + 2)), -1
+            np.round(np.linspace(MAX_TEMP, calibration_data[station]["voltage"][room_temp_step_num], num_standards + 2)), -1
         )  # get rid of room_temp
-        below_rt = np.round(np.linspace(calibration_data[station]["voltage"][room_temp_step_num], config["min_temp"], num_standards + 2))
+        below_rt = np.round(np.linspace(calibration_data[station]["voltage"][room_temp_step_num], MIN_TEMP, num_standards + 2))
         setpoints[station] = np.append(above_rt, below_rt).astype(int)
         print(f"Setpoints for station {station}: {setpoints[station]} ")
 
@@ -149,11 +156,11 @@ def collect_temp_data(
         if step_num == room_temp_step_num:
             continue
         print(f"\n---- Starting temperature sweep step: {step_num}/{calibration_steps - 1} ----")
-        temp_commands = [0x7FFFFFFF] * 4
+        temp_commands = [0] * 4
         for station in station_list:
             temp_commands[station] = int(setpoints[station][step_num])
         print(f"Sending setpoints: {temp_commands} to HT-eVOLVER...")
-        htevolver_client.update_temp(temp_commands, immediate=True, recurring=True)
+        htevolver_client.update_parameter("temp", temp_commands, immediate=True, recurring=True)
 
         while True:
             proceed = input("Wait for 30 mins to allow for heat equilibration...\nPress Enter to continue.")
@@ -163,7 +170,7 @@ def collect_temp_data(
         print("Temperature reading starting, do not move vials or exit...")
         current_counter = htevolver_client.broadcast_counter
         read_num = 0
-        while read_num < conf["read_num"]:
+        while read_num < READ_NUM:
             # check to see if last stored counter matches client tracked broadcast_couter (change indicates new readings have arrived)
             if current_counter != htevolver_client.broadcast_counter:
                 # add data to triplet structure and increment broadcast counter check and read number
@@ -177,7 +184,7 @@ def collect_temp_data(
         for station in station_list:
             temperature_input = None
             print(f"\nMeasure vial temperatures for station {station} with probe to generate temperature standards")
-            for position_index, vial_position in enumerate(config["default_vials_temp"]):
+            for position_index, vial_position in enumerate(DEFAULT_VIALS_TEMP):
                 while True:
                     try:
                         temperature_input = float(
@@ -259,7 +266,7 @@ def collect_od_data(
         current_counter = htevolver_client.broadcast_counter
         read_num = 0
         print("Readings starting, do not move vials or exit...")
-        while read_num < conf["read_num"]:
+        while read_num < READ_NUM:
             # check to see if last stored counter matches client tracked broadcast_couter (change indicates new readings have arrived)
             if current_counter != htevolver_client.broadcast_counter:
                 # add data to triplet structure and increment broadcast counter check and read number
@@ -303,12 +310,13 @@ def sigmoid_fit(
 ) -> dict[int, CalibrationData]:
     print("\nGenerating sigmoid fit for collected OD data...")
     for vial in calibration_data:
-        print(calibration_data[vial])
         # p0 = [62721, 62721, 0, -1]
         # maxfev=1000000000
-        calibration_data[vial]["coefficients"] = curve_fit(
-            htevolver_client.sigmoid, calibration_data[vial]["standards"], calibration_data[vial]["voltage"]
+        print(calibration_data[vial]["voltage"])
+        coefficients, cov = curve_fit(
+            htevolver_client.sigmoid, calibration_data[vial]["standards"], calibration_data[vial]["voltage"], maxfev=1000000000
         )
+        calibration_data[vial]["coefficients"] = coefficients
     if graph:
         # calculate the highest value recorded during the calibration for the graph settings
         max_values = np.array([np.max(calibration_data[vial]["voltage"]) for vial in calibration_data])
@@ -323,13 +331,10 @@ def linear_fit(
     htevolver_client: HTEvolverNamespace, calibration_data: dict[int, CalibrationData], graph: bool = True
 ) -> dict[int, CalibrationData]:
     print("\nGenerating linear fit for collected Temperature data...")
-    print(calibration_data)
 
     for station in calibration_data:
-        calibration_data[station]["coefficients"] = curve_fit(
-            htevolver_client.linear, calibration_data[station]["standards"], calibration_data[station]["voltage"]
-        )
-
+        coefficients, cov = curve_fit(htevolver_client.linear, calibration_data[station]["standards"], calibration_data[station]["voltage"])
+        calibration_data[station]["coefficients"] = coefficients
     if graph:
         max_values = np.array([np.max(calibration_data[station]["voltage"]) for station in calibration_data])
         max_value = np.max(max_values)
@@ -436,18 +441,14 @@ if __name__ == "__main__":
     evolver_ip = options.ip_address
     current_directory = os.getcwd()
     calibration_directory = os.path.join(current_directory, "calibration_data")
-    if not os.path.exists(calibration_directory):
-        os.makedirs(calibration_directory)
-    htevolver_client = HTEvolverNamespace("/default_evolver", stations=[0], directory=calibration_directory)
-    conf = {}
 
-    if options.calibration_type not in ["temp", "temperature", "density", "od"]:
-        print(f"valid calibration not entered, must be in {conf['valid_calibrations']}")
+    if int(options.standard_number) >= STANDARD_NUM_MIN:
+        print(f"more standards are needed, must be at least {STANDARD_NUM_MIN}")
         sys.exit(2)
 
-    socketIO_eVOLVER = socketio.Client()
-    socketIO_eVOLVER.register_namespace(htevolver_client)
-    socketIO_eVOLVER.connect("http://{0}:{1}".format(evolver_ip, 8081), namespaces=["/default_evolver"])
+    if not os.path.exists(calibration_directory):
+        os.makedirs(calibration_directory)
+    valid_calibrations = ["temp", "temperature", "density", "od"]
 
     station_list: list[int] = []
     if options.stations != []:
@@ -455,11 +456,20 @@ if __name__ == "__main__":
     else:
         station_list = [0, 1, 2, 3]
 
+    if options.calibration_type not in ["temp", "temperature", "density", "od"]:
+        print(f"valid calibration not entered, must be in {valid_calibrations} but received {options.calibration_type}")
+        sys.exit(2)
+
+    htevolver_client = HTEvolverNamespace("/default_evolver", stations=station_list, directory=calibration_directory, supress_save=True)
+    socketIO_eVOLVER = socketio.Client()
+    socketIO_eVOLVER.register_namespace(htevolver_client)
+    socketIO_eVOLVER.connect("http://{0}:{1}".format(evolver_ip, 8081), namespaces=["/default_evolver"])
+
     # start data collection procedure based on target calibration protocol
     collected_calibration_data = {}
     final_calibration_data = {}
     if options.calibration_type in ["temp", "temperature"]:
-        collected_calibration_data = collect_temp_data(htevolver_client, station_list, int(options.standard_number), conf)
+        collected_calibration_data = collect_temp_data(htevolver_client, station_list, int(options.standard_number))
         final_calibration_data = linear_fit(htevolver_client, collected_calibration_data, False)
 
     if options.calibration_type in ["density", "OD", "od"]:
@@ -470,7 +480,7 @@ if __name__ == "__main__":
                     f"\nEnter list of vials to calibrate for station: {station} using spaces OR leave empty to use default. Press enter to continue: "
                 )
                 if vials == "":
-                    vial_list = conf["default_vial_list"]
+                    vial_list = DEFAULT_VIALS_OD
                     break
                 else:
                     try:
@@ -485,7 +495,7 @@ if __name__ == "__main__":
 
     # Generate filename with timestamp
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filename = f"calibration_data_{options.calibration_type}_{timestamp}.json"
+    filename = os.path.join(htevolver_client.directory, f"calibration_data_{options.calibration_type}_{timestamp}.json")
 
     # Convert data to serializable format
     serializable_data = prepare_for_serialization(final_calibration_data)
