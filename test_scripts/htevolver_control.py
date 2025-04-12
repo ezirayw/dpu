@@ -1,7 +1,8 @@
-import socketio
-import sys
 import argparse
 import logging
+import sys
+
+import socketio
 from htevolver_client import HTEvolverNamespace
 
 logger = logging.getLogger(__name__)

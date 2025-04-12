@@ -1,15 +1,16 @@
-import sys
-import os
-import socketio
 import argparse
-import numpy as np
-from scipy.optimize import curve_fit
-from typing import TypedDict
-import matplotlib.pyplot as plt
-import json
 import datetime
-from htevolver_client import HTEvolverNamespace
+import json
 import logging
+import os
+import sys
+from typing import TypedDict
+
+import matplotlib.pyplot as plt
+import numpy as np
+import socketio
+from htevolver_client import HTEvolverNamespace
+from scipy.optimize import curve_fit
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -129,7 +130,13 @@ def collect_temp_data(htevolver_client: HTEvolverNamespace, station_list: list[i
                 try:
                     temperature_input = float(input(f"Enter temperature (C) value for vial slot {vial_position} in station {station}: "))
                     if temperature_input >= 0:
-                        break
+                        validation = input(
+                            f"Entered value is {temperature_input}. Press enter to commit this value or type 'return' to re-enter a temperature."
+                        )
+                        if validation == "":
+                            break
+                        else:
+                            continue
                 except ValueError:
                     print("Input a valid float number")
             temperature_measurements[station][position_index] = temperature_input
@@ -233,7 +240,7 @@ def collect_od_data(
     if num_standards != len(vial_list):
         # padding = np.full(len(vial_list) - num_standards, np.nan)
         padding = [float("nan")] * (len(vial_list) - num_standards)
-        standards_mask.extend(padding)
+        standards_mask.extend(padding)  # ignore pyright here
 
     # get standards from user
     print("\nEnsure that standards are prepared before continuing")
@@ -472,7 +479,7 @@ if __name__ == "__main__":
         collected_calibration_data = collect_temp_data(htevolver_client, station_list, int(options.standard_number))
         final_calibration_data = linear_fit(htevolver_client, collected_calibration_data, False)
 
-    if options.calibration_type in ["density", "OD", "od"]:
+    elif options.calibration_type in ["density", "OD", "od"]:
         for station in station_list:
             vial_list: list[int] = []
             while True:

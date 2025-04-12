@@ -3384,3 +3384,17 @@
 
 2025-04-11 13:43:05 - htevolver_client - [INFO] - dpu disconnected from eVOLVER server
 
+2025-04-11 15:18:12 - htevolver_client - [INFO] - dpu connected to eVOLVER server
+
+2025-04-11 15:18:19 - htevolver_client - [INFO] - updating temp_config with {'param': 'temp_config', 'address': 12, 'value': [2063, 0, 0, 0], 'immediate': True, 'recurring': True}
+
+2025-04-11 15:18:22 - htevolver_client - [INFO] - dpu disconnected from eVOLVER server
+
+2025-04-11 18:13:07 - htevolver_client - [INFO] - dpu connected to eVOLVER server
+
+2025-04-11 18:13:12 - htevolver_client - [INFO] - updating temp with {'param': 'temp', 'address': 8, 'value': [0, 0, 0, 0], 'immediate': True, 'recurring': True}
+
+2025-04-11 18:13:14 - htevolver_client - [INFO] - dpu disconnected from eVOLVER server
+
+2025-04-11 18:13:14 - htevolver_client - [INFO] - eVOLVER broadcast received
+
