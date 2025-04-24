@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "htevolver_client"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Ezira Yimer Wolle", email = "ezirayw@bu.edu" }]
+maintainers = [{ name = "Ezira Yimer Wolle", email = "ezirayw@bu.edu" }]
+keywords = ["htevolver", "evolver"]
+classifiers = [
+    'Development Status :: 1 - Beta',
+    'Environment :: Console',
+    'Intended Audience :: Science/Research',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3.12',
+    'Topic :: Scientific/Engineering',
+]
+dependencies = [
+    "bidict",
+    "certifi",
+    "charset-normalizer",
+    "contourpy",
+    "cycler",
+    "fonttools",
+    "h11",
+    "idna",
+    "kiwisolver",
+    "matplotlib",
+    "numpy",
+    "packaging",
+    "pillow",
+    "pyparsing",
+    "python-dateutil",
+    "python-engineio",
+    "python-socketio",
+    "requests",
+    "scipy",
+    "simple-websocket",
+    "six",
+    "urllib3",
+    "websocket-client",
+    "wsproto",
+]
+
+[project.urls]
+Repository = "https://github.com/ezirayw/dpu"
+
+[project.optional-dependencies]
+dev = ["ruff"]
+
+[tool.pyright]
+venvPath = "/Users/ezirayimerwolle/.pyenv/versions"
+venv = "dpu"
+
+[tool.setuptools.packages.find]
+exclude = ["utils*", "experiments*"]

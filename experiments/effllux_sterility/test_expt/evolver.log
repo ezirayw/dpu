@@ -1,0 +1,583 @@
+2023-08-24 16:27:03 - robotic_functions - [INFO] - dpu connected to robotics_eVOLVER server
+2023-08-24 16:27:04 - eVOLVER - [INFO] - calibrations recieved
+2023-08-24 16:27:05 - robotic_functions - [INFO] - received active pump settings
+2023-08-24 16:27:06 - eVOLVER - [INFO] - saved a copy of current custom_script.py as test_expt_230824_1627.txt
+2023-08-24 16:27:06 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:27:25 - eVOLVER - [INFO] - Broadcast number: 19
+2023-08-24 16:27:25 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:27:25 - eVOLVER - [INFO] - Elapsed time: 0.0059 hours
+2023-08-24 16:27:25 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 51.39)
+2023-08-24 16:27:25 - robotic_functions - [INFO] - dilution routine execution: {'syringe_pump_message': {'base_media': {'quad_0': {'vial_0': 200, 'vial_1': 200, 'vial_2': 200, 'vial_3': 200, 'vial_4': 200, 'vial_5': 200, 'vial_6': 200, 'vial_7': 200, 'vial_8': 200, 'vial_9': 200, 'vial_10': 200, 'vial_11': 200, 'vial_12': 200, 'vial_13': 200, 'vial_14': 200, 'vial_15': 200, 'vial_16': 200, 'vial_17': 200}}}, 'ipp_efflux_message': ['15|1|1|60', '15|1|2|60', '15|1|3|60', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']}
+2023-08-24 16:27:52 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:28:06 - eVOLVER - [INFO] - Broadcast number: 0
+2023-08-24 16:28:06 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:28:06 - eVOLVER - [INFO] - Elapsed time: 0.0172 hours
+2023-08-24 16:28:06 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:28:36 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:28:50 - eVOLVER - [INFO] - Broadcast number: 1
+2023-08-24 16:28:50 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:28:50 - eVOLVER - [INFO] - Elapsed time: 0.0297 hours
+2023-08-24 16:28:50 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:29:21 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:29:36 - eVOLVER - [INFO] - Broadcast number: 2
+2023-08-24 16:29:36 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:29:36 - eVOLVER - [INFO] - Elapsed time: 0.0423 hours
+2023-08-24 16:29:36 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:30:06 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:30:21 - eVOLVER - [INFO] - Broadcast number: 3
+2023-08-24 16:30:21 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:30:21 - eVOLVER - [INFO] - Elapsed time: 0.0549 hours
+2023-08-24 16:30:21 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:30:52 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:31:06 - eVOLVER - [INFO] - Broadcast number: 4
+2023-08-24 16:31:06 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:31:06 - eVOLVER - [INFO] - Elapsed time: 0.0674 hours
+2023-08-24 16:31:06 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:31:36 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:31:55 - eVOLVER - [INFO] - Broadcast number: 5
+2023-08-24 16:31:55 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:31:55 - eVOLVER - [INFO] - Elapsed time: 0.0811 hours
+2023-08-24 16:31:55 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:32:21 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:32:36 - eVOLVER - [INFO] - Broadcast number: 6
+2023-08-24 16:32:36 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:32:36 - eVOLVER - [INFO] - Elapsed time: 0.0924 hours
+2023-08-24 16:32:36 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:32:49 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:33:04 - eVOLVER - [INFO] - Broadcast number: 7
+2023-08-24 16:33:04 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:33:04 - eVOLVER - [INFO] - Elapsed time: 0.1001 hours
+2023-08-24 16:33:04 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:33:06 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:33:21 - eVOLVER - [INFO] - Broadcast number: 8
+2023-08-24 16:33:21 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:33:21 - eVOLVER - [INFO] - Elapsed time: 0.1049 hours
+2023-08-24 16:33:21 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:33:39 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:33:55 - eVOLVER - [INFO] - Broadcast number: 9
+2023-08-24 16:33:55 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:33:55 - eVOLVER - [INFO] - Elapsed time: 0.1144 hours
+2023-08-24 16:33:55 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:33:55 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:34:13 - eVOLVER - [INFO] - Broadcast number: 10
+2023-08-24 16:34:13 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:34:13 - eVOLVER - [INFO] - Elapsed time: 0.1192 hours
+2023-08-24 16:34:13 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:34:25 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:34:43 - eVOLVER - [INFO] - Broadcast number: 11
+2023-08-24 16:34:43 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:34:43 - eVOLVER - [INFO] - Elapsed time: 0.1277 hours
+2023-08-24 16:34:43 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:34:43 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:34:58 - eVOLVER - [INFO] - Broadcast number: 12
+2023-08-24 16:34:58 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:34:58 - eVOLVER - [INFO] - Elapsed time: 0.1319 hours
+2023-08-24 16:34:58 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:35:28 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:35:46 - eVOLVER - [INFO] - Broadcast number: 13
+2023-08-24 16:35:46 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:35:46 - eVOLVER - [INFO] - Elapsed time: 0.1453 hours
+2023-08-24 16:35:46 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:36:07 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:36:23 - eVOLVER - [INFO] - Broadcast number: 14
+2023-08-24 16:36:23 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:36:23 - eVOLVER - [INFO] - Elapsed time: 0.1555 hours
+2023-08-24 16:36:23 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:36:26 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:36:43 - eVOLVER - [INFO] - Broadcast number: 15
+2023-08-24 16:36:43 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:36:43 - eVOLVER - [INFO] - Elapsed time: 0.1611 hours
+2023-08-24 16:36:43 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:37:09 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:37:26 - eVOLVER - [INFO] - Broadcast number: 16
+2023-08-24 16:37:26 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:37:26 - eVOLVER - [INFO] - Elapsed time: 0.1730 hours
+2023-08-24 16:37:26 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:37:55 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:38:13 - eVOLVER - [INFO] - Broadcast number: 17
+2023-08-24 16:38:13 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:38:13 - eVOLVER - [INFO] - Elapsed time: 0.1859 hours
+2023-08-24 16:38:13 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:38:43 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:38:56 - eVOLVER - [INFO] - Broadcast number: 18
+2023-08-24 16:38:56 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:38:56 - eVOLVER - [INFO] - Elapsed time: 0.1978 hours
+2023-08-24 16:38:56 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:39:26 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:39:39 - eVOLVER - [INFO] - Broadcast number: 19
+2023-08-24 16:39:39 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:39:39 - eVOLVER - [INFO] - Elapsed time: 0.2100 hours
+2023-08-24 16:39:39 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:39:40 - robotic_functions - [INFO] - dilution routine execution: {'syringe_pump_message': {'base_media': {'quad_0': {'vial_0': 200, 'vial_1': 200, 'vial_2': 200, 'vial_3': 200, 'vial_4': 200, 'vial_5': 200, 'vial_6': 200, 'vial_7': 200, 'vial_8': 200, 'vial_9': 200, 'vial_10': 200, 'vial_11': 200, 'vial_12': 200, 'vial_13': 200, 'vial_14': 200, 'vial_15': 200, 'vial_16': 200, 'vial_17': 200}}}, 'ipp_efflux_message': ['15|1|1|60', '15|1|2|60', '15|1|3|60', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']}
+2023-08-24 16:40:10 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:40:24 - eVOLVER - [INFO] - Broadcast number: 0
+2023-08-24 16:40:24 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:40:24 - eVOLVER - [INFO] - Elapsed time: 0.2224 hours
+2023-08-24 16:40:24 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:40:54 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:41:09 - eVOLVER - [INFO] - Broadcast number: 1
+2023-08-24 16:41:09 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:41:09 - eVOLVER - [INFO] - Elapsed time: 0.2349 hours
+2023-08-24 16:41:09 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:41:39 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:41:54 - eVOLVER - [INFO] - Broadcast number: 2
+2023-08-24 16:41:54 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:41:54 - eVOLVER - [INFO] - Elapsed time: 0.2473 hours
+2023-08-24 16:41:54 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:41:56 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:42:13 - eVOLVER - [INFO] - Broadcast number: 3
+2023-08-24 16:42:13 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:42:13 - eVOLVER - [INFO] - Elapsed time: 0.2527 hours
+2023-08-24 16:42:13 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:42:27 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:42:40 - eVOLVER - [INFO] - Broadcast number: 4
+2023-08-24 16:42:40 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:42:40 - eVOLVER - [INFO] - Elapsed time: 0.2600 hours
+2023-08-24 16:42:40 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:43:14 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:43:24 - eVOLVER - [INFO] - Broadcast number: 5
+2023-08-24 16:43:24 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:43:24 - eVOLVER - [INFO] - Elapsed time: 0.2725 hours
+2023-08-24 16:43:24 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:43:57 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:44:14 - eVOLVER - [INFO] - Broadcast number: 6
+2023-08-24 16:44:14 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:44:14 - eVOLVER - [INFO] - Elapsed time: 0.2862 hours
+2023-08-24 16:44:14 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:44:39 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:44:57 - eVOLVER - [INFO] - Broadcast number: 7
+2023-08-24 16:44:57 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:44:57 - eVOLVER - [INFO] - Elapsed time: 0.2982 hours
+2023-08-24 16:44:57 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:45:27 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:45:40 - eVOLVER - [INFO] - Broadcast number: 8
+2023-08-24 16:45:40 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:45:40 - eVOLVER - [INFO] - Elapsed time: 0.3101 hours
+2023-08-24 16:45:40 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:46:13 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:46:28 - eVOLVER - [INFO] - Broadcast number: 9
+2023-08-24 16:46:28 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:46:28 - eVOLVER - [INFO] - Elapsed time: 0.3234 hours
+2023-08-24 16:46:28 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:46:57 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:47:10 - eVOLVER - [INFO] - Broadcast number: 10
+2023-08-24 16:47:10 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:47:10 - eVOLVER - [INFO] - Elapsed time: 0.3351 hours
+2023-08-24 16:47:10 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:47:40 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:47:57 - eVOLVER - [INFO] - Broadcast number: 11
+2023-08-24 16:47:57 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:47:57 - eVOLVER - [INFO] - Elapsed time: 0.3482 hours
+2023-08-24 16:47:57 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:48:25 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:48:40 - eVOLVER - [INFO] - Broadcast number: 12
+2023-08-24 16:48:40 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:48:40 - eVOLVER - [INFO] - Elapsed time: 0.3601 hours
+2023-08-24 16:48:40 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:49:14 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:49:28 - eVOLVER - [INFO] - Broadcast number: 13
+2023-08-24 16:49:28 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:49:28 - eVOLVER - [INFO] - Elapsed time: 0.3734 hours
+2023-08-24 16:49:28 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:49:57 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:50:14 - eVOLVER - [INFO] - Broadcast number: 14
+2023-08-24 16:50:14 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:50:14 - eVOLVER - [INFO] - Elapsed time: 0.3863 hours
+2023-08-24 16:50:14 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:50:40 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:50:55 - eVOLVER - [INFO] - Broadcast number: 15
+2023-08-24 16:50:55 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:50:55 - eVOLVER - [INFO] - Elapsed time: 0.3975 hours
+2023-08-24 16:50:55 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:51:28 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:51:40 - eVOLVER - [INFO] - Broadcast number: 16
+2023-08-24 16:51:40 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:51:40 - eVOLVER - [INFO] - Elapsed time: 0.4102 hours
+2023-08-24 16:51:40 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:52:10 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:52:28 - eVOLVER - [INFO] - Broadcast number: 17
+2023-08-24 16:52:28 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:52:28 - eVOLVER - [INFO] - Elapsed time: 0.4234 hours
+2023-08-24 16:52:28 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:52:57 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:53:14 - eVOLVER - [INFO] - Broadcast number: 18
+2023-08-24 16:53:14 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:53:14 - eVOLVER - [INFO] - Elapsed time: 0.4364 hours
+2023-08-24 16:53:14 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:53:40 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:53:57 - eVOLVER - [INFO] - Broadcast number: 19
+2023-08-24 16:53:57 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:53:57 - eVOLVER - [INFO] - Elapsed time: 0.4483 hours
+2023-08-24 16:53:57 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:53:57 - robotic_functions - [INFO] - dilution routine execution: {'syringe_pump_message': {'base_media': {'quad_0': {'vial_0': 200, 'vial_1': 200, 'vial_2': 200, 'vial_3': 200, 'vial_4': 200, 'vial_5': 200, 'vial_6': 200, 'vial_7': 200, 'vial_8': 200, 'vial_9': 200, 'vial_10': 200, 'vial_11': 200, 'vial_12': 200, 'vial_13': 200, 'vial_14': 200, 'vial_15': 200, 'vial_16': 200, 'vial_17': 200}}}, 'ipp_efflux_message': ['15|1|1|60', '15|1|2|60', '15|1|3|60', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']}
+2023-08-24 16:54:24 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:54:39 - eVOLVER - [INFO] - Broadcast number: 0
+2023-08-24 16:54:39 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:54:39 - eVOLVER - [INFO] - Elapsed time: 0.4600 hours
+2023-08-24 16:54:39 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:55:09 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:55:24 - eVOLVER - [INFO] - Broadcast number: 1
+2023-08-24 16:55:24 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:55:24 - eVOLVER - [INFO] - Elapsed time: 0.4724 hours
+2023-08-24 16:55:24 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:55:54 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:56:10 - eVOLVER - [INFO] - Broadcast number: 2
+2023-08-24 16:56:10 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:56:10 - eVOLVER - [INFO] - Elapsed time: 0.4851 hours
+2023-08-24 16:56:10 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:56:15 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:56:33 - eVOLVER - [INFO] - Broadcast number: 3
+2023-08-24 16:56:33 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:56:33 - eVOLVER - [INFO] - Elapsed time: 0.4916 hours
+2023-08-24 16:56:33 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:56:40 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:56:59 - eVOLVER - [INFO] - Broadcast number: 4
+2023-08-24 16:56:59 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:56:59 - eVOLVER - [INFO] - Elapsed time: 0.4987 hours
+2023-08-24 16:56:59 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:57:25 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:57:40 - eVOLVER - [INFO] - Broadcast number: 5
+2023-08-24 16:57:40 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:57:40 - eVOLVER - [INFO] - Elapsed time: 0.5101 hours
+2023-08-24 16:57:40 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:58:10 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:58:24 - eVOLVER - [INFO] - Broadcast number: 6
+2023-08-24 16:58:24 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:58:24 - eVOLVER - [INFO] - Elapsed time: 0.5223 hours
+2023-08-24 16:58:24 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:58:31 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:58:50 - eVOLVER - [INFO] - Broadcast number: 7
+2023-08-24 16:58:50 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:58:50 - eVOLVER - [INFO] - Elapsed time: 0.5295 hours
+2023-08-24 16:58:50 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:58:56 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:59:10 - eVOLVER - [INFO] - Broadcast number: 8
+2023-08-24 16:59:10 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:59:10 - eVOLVER - [INFO] - Elapsed time: 0.5351 hours
+2023-08-24 16:59:10 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:59:14 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:59:29 - eVOLVER - [INFO] - Broadcast number: 9
+2023-08-24 16:59:29 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:59:29 - eVOLVER - [INFO] - Elapsed time: 0.5405 hours
+2023-08-24 16:59:29 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:59:40 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 16:59:57 - eVOLVER - [INFO] - Broadcast number: 10
+2023-08-24 16:59:57 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 16:59:57 - eVOLVER - [INFO] - Elapsed time: 0.5481 hours
+2023-08-24 16:59:57 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 16:59:57 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:00:14 - eVOLVER - [INFO] - Broadcast number: 11
+2023-08-24 17:00:14 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:00:14 - eVOLVER - [INFO] - Elapsed time: 0.5530 hours
+2023-08-24 17:00:14 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:00:27 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:00:40 - eVOLVER - [INFO] - Broadcast number: 12
+2023-08-24 17:00:40 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:00:40 - eVOLVER - [INFO] - Elapsed time: 0.5603 hours
+2023-08-24 17:00:40 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:01:03 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:01:19 - eVOLVER - [INFO] - Broadcast number: 13
+2023-08-24 17:01:19 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:01:19 - eVOLVER - [INFO] - Elapsed time: 0.5711 hours
+2023-08-24 17:01:19 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:01:19 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:01:37 - eVOLVER - [INFO] - Broadcast number: 14
+2023-08-24 17:01:37 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:01:37 - eVOLVER - [INFO] - Elapsed time: 0.5759 hours
+2023-08-24 17:01:37 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:01:42 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:02:00 - eVOLVER - [INFO] - Broadcast number: 15
+2023-08-24 17:02:00 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:02:00 - eVOLVER - [INFO] - Elapsed time: 0.5823 hours
+2023-08-24 17:02:00 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:02:04 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:02:20 - eVOLVER - [INFO] - Broadcast number: 16
+2023-08-24 17:02:20 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:02:20 - eVOLVER - [INFO] - Elapsed time: 0.5880 hours
+2023-08-24 17:02:20 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:02:50 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:03:07 - eVOLVER - [INFO] - Broadcast number: 17
+2023-08-24 17:03:07 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:03:07 - eVOLVER - [INFO] - Elapsed time: 0.6009 hours
+2023-08-24 17:03:07 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:03:37 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:03:50 - eVOLVER - [INFO] - Broadcast number: 18
+2023-08-24 17:03:50 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:03:50 - eVOLVER - [INFO] - Elapsed time: 0.6129 hours
+2023-08-24 17:03:50 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:04:20 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:04:34 - eVOLVER - [INFO] - Broadcast number: 19
+2023-08-24 17:04:34 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:04:34 - eVOLVER - [INFO] - Elapsed time: 0.6251 hours
+2023-08-24 17:04:34 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:04:34 - robotic_functions - [INFO] - dilution routine execution: {'syringe_pump_message': {'base_media': {'quad_0': {'vial_0': 200, 'vial_1': 200, 'vial_2': 200, 'vial_3': 200, 'vial_4': 200, 'vial_5': 200, 'vial_6': 200, 'vial_7': 200, 'vial_8': 200, 'vial_9': 200, 'vial_10': 200, 'vial_11': 200, 'vial_12': 200, 'vial_13': 200, 'vial_14': 200, 'vial_15': 200, 'vial_16': 200, 'vial_17': 200}}}, 'ipp_efflux_message': ['15|1|1|60', '15|1|2|60', '15|1|3|60', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']}
+2023-08-24 17:05:05 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:05:19 - eVOLVER - [INFO] - Broadcast number: 0
+2023-08-24 17:05:19 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:05:19 - eVOLVER - [INFO] - Elapsed time: 0.6376 hours
+2023-08-24 17:05:19 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:05:49 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:06:05 - eVOLVER - [INFO] - Broadcast number: 1
+2023-08-24 17:06:05 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:06:05 - eVOLVER - [INFO] - Elapsed time: 0.6503 hours
+2023-08-24 17:06:05 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:06:34 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:06:49 - eVOLVER - [INFO] - Broadcast number: 2
+2023-08-24 17:06:49 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:06:49 - eVOLVER - [INFO] - Elapsed time: 0.6627 hours
+2023-08-24 17:06:49 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:06:51 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:07:09 - eVOLVER - [INFO] - Broadcast number: 3
+2023-08-24 17:07:09 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:07:09 - eVOLVER - [INFO] - Elapsed time: 0.6682 hours
+2023-08-24 17:07:09 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:07:21 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:07:35 - eVOLVER - [INFO] - Broadcast number: 4
+2023-08-24 17:07:35 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:07:35 - eVOLVER - [INFO] - Elapsed time: 0.6753 hours
+2023-08-24 17:07:35 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:08:09 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:08:19 - eVOLVER - [INFO] - Broadcast number: 5
+2023-08-24 17:08:19 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:08:19 - eVOLVER - [INFO] - Elapsed time: 0.6876 hours
+2023-08-24 17:08:19 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:08:50 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:09:09 - eVOLVER - [INFO] - Broadcast number: 6
+2023-08-24 17:09:09 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:09:09 - eVOLVER - [INFO] - Elapsed time: 0.7015 hours
+2023-08-24 17:09:09 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:09:34 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:09:51 - eVOLVER - [INFO] - Broadcast number: 7
+2023-08-24 17:09:51 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:09:51 - eVOLVER - [INFO] - Elapsed time: 0.7133 hours
+2023-08-24 17:09:51 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:10:22 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:10:39 - eVOLVER - [INFO] - Broadcast number: 8
+2023-08-24 17:10:39 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:10:39 - eVOLVER - [INFO] - Elapsed time: 0.7266 hours
+2023-08-24 17:10:39 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:11:09 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:11:20 - eVOLVER - [INFO] - Broadcast number: 9
+2023-08-24 17:11:20 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:11:20 - eVOLVER - [INFO] - Elapsed time: 0.7379 hours
+2023-08-24 17:11:20 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:11:51 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:12:04 - eVOLVER - [INFO] - Broadcast number: 10
+2023-08-24 17:12:04 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:12:04 - eVOLVER - [INFO] - Elapsed time: 0.7501 hours
+2023-08-24 17:12:04 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:12:35 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:12:51 - eVOLVER - [INFO] - Broadcast number: 11
+2023-08-24 17:12:51 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:12:51 - eVOLVER - [INFO] - Elapsed time: 0.7633 hours
+2023-08-24 17:12:51 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:13:19 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:13:39 - eVOLVER - [INFO] - Broadcast number: 12
+2023-08-24 17:13:39 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:13:39 - eVOLVER - [INFO] - Elapsed time: 0.7767 hours
+2023-08-24 17:13:39 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:14:09 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:14:21 - eVOLVER - [INFO] - Broadcast number: 13
+2023-08-24 17:14:21 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:14:21 - eVOLVER - [INFO] - Elapsed time: 0.7883 hours
+2023-08-24 17:14:21 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:14:51 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:15:05 - eVOLVER - [INFO] - Broadcast number: 14
+2023-08-24 17:15:05 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:15:05 - eVOLVER - [INFO] - Elapsed time: 0.8004 hours
+2023-08-24 17:15:05 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:15:40 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:15:49 - eVOLVER - [INFO] - Broadcast number: 15
+2023-08-24 17:15:49 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:15:49 - eVOLVER - [INFO] - Elapsed time: 0.8126 hours
+2023-08-24 17:15:49 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:16:20 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:16:35 - eVOLVER - [INFO] - Broadcast number: 16
+2023-08-24 17:16:35 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:16:35 - eVOLVER - [INFO] - Elapsed time: 0.8255 hours
+2023-08-24 17:16:35 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:17:04 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:17:22 - eVOLVER - [INFO] - Broadcast number: 17
+2023-08-24 17:17:22 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:17:22 - eVOLVER - [INFO] - Elapsed time: 0.8384 hours
+2023-08-24 17:17:22 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:17:52 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:18:11 - eVOLVER - [INFO] - Broadcast number: 18
+2023-08-24 17:18:11 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:18:11 - eVOLVER - [INFO] - Elapsed time: 0.8520 hours
+2023-08-24 17:18:11 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:18:34 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:18:50 - eVOLVER - [INFO] - Broadcast number: 19
+2023-08-24 17:18:50 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:18:50 - eVOLVER - [INFO] - Elapsed time: 0.8629 hours
+2023-08-24 17:18:50 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:18:50 - robotic_functions - [INFO] - dilution routine execution: {'syringe_pump_message': {'base_media': {'quad_0': {'vial_0': 200, 'vial_1': 200, 'vial_2': 200, 'vial_3': 200, 'vial_4': 200, 'vial_5': 200, 'vial_6': 200, 'vial_7': 200, 'vial_8': 200, 'vial_9': 200, 'vial_10': 200, 'vial_11': 200, 'vial_12': 200, 'vial_13': 200, 'vial_14': 200, 'vial_15': 200, 'vial_16': 200, 'vial_17': 200}}}, 'ipp_efflux_message': ['15|1|1|60', '15|1|2|60', '15|1|3|60', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']}
+2023-08-24 17:19:19 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:19:34 - eVOLVER - [INFO] - Broadcast number: 0
+2023-08-24 17:19:34 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:19:34 - eVOLVER - [INFO] - Elapsed time: 0.8751 hours
+2023-08-24 17:19:34 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:20:04 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:20:19 - eVOLVER - [INFO] - Broadcast number: 1
+2023-08-24 17:20:19 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:20:19 - eVOLVER - [INFO] - Elapsed time: 0.8876 hours
+2023-08-24 17:20:19 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:20:49 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:21:13 - eVOLVER - [INFO] - Broadcast number: 2
+2023-08-24 17:21:13 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:21:13 - eVOLVER - [INFO] - Elapsed time: 0.9026 hours
+2023-08-24 17:21:13 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:21:39 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:21:49 - eVOLVER - [INFO] - Broadcast number: 3
+2023-08-24 17:21:49 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:21:49 - eVOLVER - [INFO] - Elapsed time: 0.9126 hours
+2023-08-24 17:21:49 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:22:20 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:22:35 - eVOLVER - [INFO] - Broadcast number: 4
+2023-08-24 17:22:35 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:22:35 - eVOLVER - [INFO] - Elapsed time: 0.9254 hours
+2023-08-24 17:22:35 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:23:08 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:23:22 - eVOLVER - [INFO] - Broadcast number: 5
+2023-08-24 17:23:22 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:23:22 - eVOLVER - [INFO] - Elapsed time: 0.9385 hours
+2023-08-24 17:23:22 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:23:50 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:24:05 - eVOLVER - [INFO] - Broadcast number: 6
+2023-08-24 17:24:05 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:24:05 - eVOLVER - [INFO] - Elapsed time: 0.9504 hours
+2023-08-24 17:24:05 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:24:34 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:24:51 - eVOLVER - [INFO] - Broadcast number: 7
+2023-08-24 17:24:51 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:24:51 - eVOLVER - [INFO] - Elapsed time: 0.9633 hours
+2023-08-24 17:24:51 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:25:22 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:25:34 - eVOLVER - [INFO] - Broadcast number: 8
+2023-08-24 17:25:34 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:25:34 - eVOLVER - [INFO] - Elapsed time: 0.9751 hours
+2023-08-24 17:25:34 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:26:05 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:26:20 - eVOLVER - [INFO] - Broadcast number: 9
+2023-08-24 17:26:20 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:26:20 - eVOLVER - [INFO] - Elapsed time: 0.9879 hours
+2023-08-24 17:26:20 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:26:53 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:27:04 - eVOLVER - [INFO] - Broadcast number: 10
+2023-08-24 17:27:04 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:27:04 - eVOLVER - [INFO] - Elapsed time: 1.0001 hours
+2023-08-24 17:27:04 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:27:35 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:27:53 - eVOLVER - [INFO] - Broadcast number: 11
+2023-08-24 17:27:53 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:27:53 - eVOLVER - [INFO] - Elapsed time: 1.0138 hours
+2023-08-24 17:27:53 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:28:19 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:28:37 - eVOLVER - [INFO] - Broadcast number: 12
+2023-08-24 17:28:37 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:28:37 - eVOLVER - [INFO] - Elapsed time: 1.0259 hours
+2023-08-24 17:28:37 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:29:05 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:29:19 - eVOLVER - [INFO] - Broadcast number: 13
+2023-08-24 17:29:19 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:29:19 - eVOLVER - [INFO] - Elapsed time: 1.0376 hours
+2023-08-24 17:29:19 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:29:52 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:30:08 - eVOLVER - [INFO] - Broadcast number: 14
+2023-08-24 17:30:08 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:30:08 - eVOLVER - [INFO] - Elapsed time: 1.0512 hours
+2023-08-24 17:30:08 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:30:34 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:30:49 - eVOLVER - [INFO] - Broadcast number: 15
+2023-08-24 17:30:49 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:30:49 - eVOLVER - [INFO] - Elapsed time: 1.0627 hours
+2023-08-24 17:30:49 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:31:20 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:31:39 - eVOLVER - [INFO] - Broadcast number: 16
+2023-08-24 17:31:39 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:31:39 - eVOLVER - [INFO] - Elapsed time: 1.0766 hours
+2023-08-24 17:31:39 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:32:05 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:32:22 - eVOLVER - [INFO] - Broadcast number: 17
+2023-08-24 17:32:22 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:32:22 - eVOLVER - [INFO] - Elapsed time: 1.0886 hours
+2023-08-24 17:32:22 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:32:53 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:33:04 - eVOLVER - [INFO] - Broadcast number: 18
+2023-08-24 17:33:04 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:33:04 - eVOLVER - [INFO] - Elapsed time: 1.1001 hours
+2023-08-24 17:33:04 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:33:37 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:33:50 - eVOLVER - [INFO] - Broadcast number: 19
+2023-08-24 17:33:50 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:33:50 - eVOLVER - [INFO] - Elapsed time: 1.1129 hours
+2023-08-24 17:33:50 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:33:50 - robotic_functions - [INFO] - dilution routine execution: {'syringe_pump_message': {'base_media': {'quad_0': {'vial_0': 200, 'vial_1': 200, 'vial_2': 200, 'vial_3': 200, 'vial_4': 200, 'vial_5': 200, 'vial_6': 200, 'vial_7': 200, 'vial_8': 200, 'vial_9': 200, 'vial_10': 200, 'vial_11': 200, 'vial_12': 200, 'vial_13': 200, 'vial_14': 200, 'vial_15': 200, 'vial_16': 200, 'vial_17': 200}}}, 'ipp_efflux_message': ['15|1|1|60', '15|1|2|60', '15|1|3|60', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--']}
+2023-08-24 17:34:19 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:34:34 - eVOLVER - [INFO] - Broadcast number: 0
+2023-08-24 17:34:34 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:34:34 - eVOLVER - [INFO] - Elapsed time: 1.1251 hours
+2023-08-24 17:34:34 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:35:04 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:35:19 - eVOLVER - [INFO] - Broadcast number: 1
+2023-08-24 17:35:19 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:35:19 - eVOLVER - [INFO] - Elapsed time: 1.1376 hours
+2023-08-24 17:35:19 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:35:49 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:36:04 - eVOLVER - [INFO] - Broadcast number: 2
+2023-08-24 17:36:04 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:36:04 - eVOLVER - [INFO] - Elapsed time: 1.1501 hours
+2023-08-24 17:36:04 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:36:15 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:36:33 - eVOLVER - [INFO] - Broadcast number: 3
+2023-08-24 17:36:33 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:36:33 - eVOLVER - [INFO] - Elapsed time: 1.1582 hours
+2023-08-24 17:36:33 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:36:36 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:36:51 - eVOLVER - [INFO] - Broadcast number: 4
+2023-08-24 17:36:51 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:36:51 - eVOLVER - [INFO] - Elapsed time: 1.1631 hours
+2023-08-24 17:36:51 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:37:23 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:37:35 - eVOLVER - [INFO] - Broadcast number: 5
+2023-08-24 17:37:35 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:37:35 - eVOLVER - [INFO] - Elapsed time: 1.1755 hours
+2023-08-24 17:37:35 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:38:09 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:38:22 - eVOLVER - [INFO] - Broadcast number: 6
+2023-08-24 17:38:22 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:38:22 - eVOLVER - [INFO] - Elapsed time: 1.1886 hours
+2023-08-24 17:38:23 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:38:52 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:39:06 - eVOLVER - [INFO] - Broadcast number: 7
+2023-08-24 17:39:06 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:39:06 - eVOLVER - [INFO] - Elapsed time: 1.2006 hours
+2023-08-24 17:39:06 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:39:38 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:39:51 - eVOLVER - [INFO] - Broadcast number: 8
+2023-08-24 17:39:51 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:39:51 - eVOLVER - [INFO] - Elapsed time: 1.2132 hours
+2023-08-24 17:39:51 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:40:24 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:40:34 - eVOLVER - [INFO] - Broadcast number: 9
+2023-08-24 17:40:34 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:40:34 - eVOLVER - [INFO] - Elapsed time: 1.2251 hours
+2023-08-24 17:40:34 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:41:06 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:41:20 - eVOLVER - [INFO] - Broadcast number: 10
+2023-08-24 17:41:20 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:41:20 - eVOLVER - [INFO] - Elapsed time: 1.2379 hours
+2023-08-24 17:41:20 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:41:49 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:42:04 - eVOLVER - [INFO] - Broadcast number: 11
+2023-08-24 17:42:04 - eVOLVER - [INFO] - Data broadcast received
+2023-08-24 17:42:04 - eVOLVER - [INFO] - Elapsed time: 1.2502 hours
+2023-08-24 17:42:04 - eVOLVER - [INFO] - updating temperatures (max. deltaT is 0.47)
+2023-08-24 17:42:34 - robotic_functions - [INFO] - Robotics broadcast received
+2023-08-24 17:42:45 - eVOLVER - [INFO] - dpu disconnected from base_eVOLVER server
+2023-08-24 17:42:45 - robotic_functions - [INFO] - dpu disconnected from robotics_eVOLVER server
+2023-08-24 17:42:45 - eVOLVER - [WARNING] - interrupt received, pausing experiment
+2023-08-24 17:42:45 - eVOLVER - [WARNING] - second interrupt received, terminating experiment
+2023-08-24 17:42:45 - eVOLVER - [WARNING] - experiment stopped, goodbye!
+2023-08-24 17:42:45 - eVOLVER - [INFO] - dpu connected to base_eVOLVER server
+2023-08-24 17:42:45 - eVOLVER - [INFO] - dpu disconnected from base_eVOLVER server

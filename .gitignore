@@ -1,6 +1,3 @@
-Icon
-Icon?
-
 # OS Generated Files #
 ######################
 .DS_Store
@@ -8,10 +5,9 @@ Icon?
 .python-version
 .python-version?
 
-# Auto Generated Files #
 dpu.egg-info/
 __pycache__/
-
-# Test Experiment Files #
-test_expt/
 *.json
+.github
+.ropeproject
+.vscode
